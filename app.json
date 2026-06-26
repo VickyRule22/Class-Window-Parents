@@ -20,6 +20,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "experiments": {
+      "baseUrl": "/classwindow-parent-app"
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
