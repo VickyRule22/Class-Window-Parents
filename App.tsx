@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import {
 
 import { AppHeader } from './src/components/AppHeader';
 import { BottomNav, TabKey } from './src/components/BottomNav';
+import { ScreenTransition } from './src/components/ScreenTransition';
 import { ReportModal } from './src/components/ReportModal';
 import { FeedScreen } from './src/screens/FeedScreen';
 import { ClassesScreen } from './src/screens/ClassesScreen';
@@ -24,9 +25,18 @@ import { WishlistsScreen } from './src/screens/WishlistsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { colors } from './src/theme';
 
+const TAB_ORDER: TabKey[] = ['feed', 'classes', 'wishlists', 'profile'];
+
 export default function App() {
   const [tab, setTab] = useState<TabKey>('feed');
+  const [direction, setDirection] = useState(1);
   const [reportOpen, setReportOpen] = useState(false);
+
+  const changeTab = (next: TabKey) => {
+    if (next === tab) return;
+    setDirection(TAB_ORDER.indexOf(next) > TAB_ORDER.indexOf(tab) ? 1 : -1);
+    setTab(next);
+  };
 
   const [fontsLoaded] = useFonts({
     'Nunito-Bold': Nunito_700Bold,
@@ -49,12 +59,14 @@ export default function App() {
         <View style={styles.phone}>
           <AppHeader />
           <View style={styles.screen}>
-            {tab === 'feed' && <FeedScreen onReport={() => setReportOpen(true)} />}
-            {tab === 'classes' && <ClassesScreen />}
-            {tab === 'wishlists' && <WishlistsScreen />}
-            {tab === 'profile' && <ProfileScreen />}
+            <ScreenTransition transitionKey={tab} direction={direction}>
+              {tab === 'feed' && <FeedScreen onReport={() => setReportOpen(true)} />}
+              {tab === 'classes' && <ClassesScreen />}
+              {tab === 'wishlists' && <WishlistsScreen />}
+              {tab === 'profile' && <ProfileScreen />}
+            </ScreenTransition>
           </View>
-          <BottomNav active={tab} onChange={setTab} />
+          <BottomNav active={tab} onChange={changeTab} />
         </View>
         <ReportModal visible={reportOpen} onClose={() => setReportOpen(false)} />
       </SafeAreaView>
