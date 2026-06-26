@@ -45,23 +45,25 @@ export function ScreenTransition({
     anim.setValue(0);
     Animated.timing(anim, {
       toValue: 1,
-      duration: 340,
-      easing: Easing.out(Easing.cubic),
+      duration: 380,
+      // ease-out with a touch of overshoot so the screen arrives and settles
+      easing: Easing.out(Easing.back(1.7)),
       useNativeDriver: true,
     }).start();
   }, [transitionKey, reduceMotion]);
 
   const translateX = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [direction * 30, 0],
+    outputRange: [direction * 32, 0],
   });
   const opacity = anim.interpolate({
-    inputRange: [0, 0.55, 1],
-    outputRange: [0, 0.7, 1],
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0.75, 1],
+    extrapolate: 'clamp',
   });
   const scale = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.98, 1],
+    outputRange: [0.975, 1],
   });
 
   return (

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, Animated, Easing, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, font } from '../theme';
 
@@ -8,21 +8,47 @@ const REASONS = ["It's inappropriate", "It's spam", 'Something else'];
 export function ReportModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [step, setStep] = useState<0 | 1>(0);
   const [choice, setChoice] = useState(0);
+  const [mounted, setMounted] = useState(visible);
+  const anim = useRef(new Animated.Value(0)).current;
 
-  const close = () => {
-    onClose();
-    // reset for next open
-    setTimeout(() => {
-      setStep(0);
-      setChoice(0);
-    }, 200);
-  };
+  useEffect(() => {
+    if (visible) {
+      setMounted(true);
+      anim.setValue(0);
+      // spring the sheet up from the bottom with a soft settle
+      Animated.spring(anim, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 9,
+        tension: 72,
+      }).start();
+    } else if (mounted) {
+      Animated.timing(anim, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start(() => {
+        setMounted(false);
+        setStep(0);
+        setChoice(0);
+      });
+    }
+  }, [visible]);
+
+  const close = () => onClose();
+
+  const sheetTranslate = anim.interpolate({ inputRange: [0, 1], outputRange: [440, 0] });
+  const backdropOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
+    <Modal visible={mounted} transparent animationType="none" onRequestClose={close}>
       <View style={styles.overlay}>
+        <Animated.View
+          style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdropOpacity }]}
+        />
         <Pressable style={StyleSheet.absoluteFill} onPress={close} />
-        <View style={styles.sheet}>
+        <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetTranslate }] }]}>
           {step === 0 ? (
             <>
               <View style={styles.header}>
@@ -88,7 +114,7 @@ export function ReportModal({ visible, onClose }: { visible: boolean; onClose: (
               </View>
             </>
           )}
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -100,6 +126,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingHorizontal: 16,
     paddingBottom: 64,
+  },
+  backdrop: {
     backgroundColor: 'rgba(10,10,10,0.7)',
   },
   sheet: {
