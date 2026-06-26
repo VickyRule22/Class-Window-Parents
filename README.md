@@ -18,14 +18,17 @@ To re-deploy after changes, see "Re-deploy" below.)
 
 ## Screens
 
-- **Home / Feed** : greeting, class filter pills, teacher post cards (gradient
-  avatars, reactions), "You're all caught up" state.
+- **Home / Feed** : greeting, interactive class filter pills, teacher post cards
+  with classroom photos, gradient avatars, tappable like, "You're all caught up".
 - **Classes** : Lincoln Elementary roster with unread badges + "Add another class".
+  Tapping a class jumps to the feed filtered to that teacher.
 - **Wishlists** : "Wishlists Coming Soon!" empty state with the Figma illustration.
 - **Profile** : parent card, notifications toggle, account settings, Sign Out.
 - **Report a post** : two-step bottom-sheet modal (reason picker, then thank-you).
 
-Tap the 3-dot menu on any post card to open the report modal.
+Tap the 3-dot menu on any post card to open the report modal. The feed photos in
+`assets/figma/posts/` are AI-generated classroom scenes (candid, activity-focused,
+no identifiable children).
 
 ## Run it
 
