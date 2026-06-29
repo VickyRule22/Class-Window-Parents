@@ -14,9 +14,11 @@ import { colors, font } from '../theme';
 export function LogInScreen({
   onLogIn,
   onSignUp,
+  onForgot,
 }: {
   onLogIn: () => void;
   onSignUp: () => void;
+  onForgot: () => void;
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -77,7 +79,7 @@ export function LogInScreen({
 
             <View style={styles.actions}>
               <PrimaryButton label="Log In" onPress={onLogIn} />
-              <Pressable hitSlop={8}>
+              <Pressable hitSlop={8} onPress={onForgot}>
                 <Text style={styles.forgot}>Forgot password?</Text>
               </Pressable>
             </View>
