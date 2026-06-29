@@ -48,6 +48,14 @@ export default function App() {
     changeTab('feed');
   };
 
+  // sign out returns to the sign-in flow and resets app state for next login
+  const signOut = () => {
+    setOnboarded(false);
+    setTab('feed');
+    setFeedFilter('all');
+    setReportOpen(false);
+  };
+
   const [fontsLoaded] = useFonts({
     'Nunito-Bold': Nunito_700Bold,
     'Nunito-ExtraBold': Nunito_800ExtraBold,
@@ -92,7 +100,7 @@ export default function App() {
               )}
               {tab === 'classes' && <ClassesScreen onOpenClass={openClass} />}
               {tab === 'wishlists' && <WishlistsScreen />}
-              {tab === 'profile' && <ProfileScreen />}
+              {tab === 'profile' && <ProfileScreen onSignOut={signOut} />}
             </ScreenTransition>
           </View>
           <BottomNav active={tab} onChange={changeTab} />

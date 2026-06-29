@@ -11,7 +11,7 @@ const ACCOUNT_ROWS = [
   { icon: '⭐', label: 'Give Feedback' },
 ];
 
-export function ProfileScreen() {
+export function ProfileScreen({ onSignOut }: { onSignOut: () => void }) {
   const [notify, setNotify] = useState(true);
 
   return (
@@ -84,9 +84,9 @@ export function ProfileScreen() {
         </View>
 
         {/* sign out */}
-        <View style={styles.signOut}>
+        <Pressable style={styles.signOut} onPress={onSignOut}>
           <Text style={styles.signOutTxt}>Sign Out</Text>
-        </View>
+        </Pressable>
       </View>
     </ScrollView>
   );
