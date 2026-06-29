@@ -8,23 +8,17 @@ import { TextField, PrimaryButton } from './ui';
 import { doodlesSvg } from './doodlesSvg';
 import { colors, font } from '../theme';
 
-// Step 1: "Create your account to join". Coral gradient hero with a faint doodle
-// wash, brand lockup, and a cream sign-up card that slides up from the bottom.
-export function InviteJoinScreen({
-  name,
-  email,
-  onName,
-  onEmail,
-  onSubmit,
+// "Log in to your account". Same coral hero + cream card as the sign-up screen,
+// reached from the "Log in instead" link. Log In drops into the app; "Sign up"
+// goes back to the create-account screen.
+export function LogInScreen({
   onLogIn,
+  onSignUp,
 }: {
-  name: string;
-  email: string;
-  onName: (v: string) => void;
-  onEmail: (v: string) => void;
-  onSubmit: () => void;
   onLogIn: () => void;
+  onSignUp: () => void;
 }) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   return (
@@ -54,27 +48,20 @@ export function InviteJoinScreen({
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.heading}>
-              <Text style={styles.title}>Create your account to join</Text>
+              <Text style={styles.title}>Log in to your account</Text>
               <Text style={styles.sub}>
-                Already have one?{' '}
-                <Text style={styles.link} onPress={onLogIn}>
-                  Log in instead
+                Don't have an account?{' '}
+                <Text style={styles.link} onPress={onSignUp}>
+                  Sign up
                 </Text>
               </Text>
             </View>
 
             <View style={styles.fields}>
               <TextField
-                label="Full Name"
-                value={name}
-                onChangeText={onName}
-                placeholder="Jamie Rivera"
-                autoCapitalize="words"
-              />
-              <TextField
                 label="Email"
                 value={email}
-                onChangeText={onEmail}
+                onChangeText={setEmail}
                 placeholder="your@email.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -89,7 +76,7 @@ export function InviteJoinScreen({
             </View>
 
             <View style={styles.actions}>
-              <PrimaryButton label="Create Account" onPress={onSubmit} />
+              <PrimaryButton label="Log In" onPress={onLogIn} />
               <Pressable hitSlop={8}>
                 <Text style={styles.forgot}>Forgot password?</Text>
               </Pressable>

@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ScreenTransition } from '../components/ScreenTransition';
 import { InviteJoinScreen } from './InviteJoinScreen';
+import { LogInScreen } from './LogInScreen';
 import { VerifyEmailScreen } from './VerifyEmailScreen';
 import { VerifiedScreen } from './VerifiedScreen';
 import { colors } from '../theme';
 
-type Step = 'join' | 'verify' | 'verified';
-const ORDER: Step[] = ['join', 'verify', 'verified'];
+type Step = 'join' | 'login' | 'verify' | 'verified';
+const ORDER: Step[] = ['join', 'login', 'verify', 'verified'];
 
 // The three-step sign-up flow shown before the main app. Carries the name + email
 // the parent types so later screens can greet them, and animates between steps
@@ -35,7 +36,11 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
             onName={setName}
             onEmail={setEmail}
             onSubmit={() => go('verify')}
+            onLogIn={() => go('login')}
           />
+        )}
+        {step === 'login' && (
+          <LogInScreen onLogIn={onDone} onSignUp={() => go('join')} />
         )}
         {step === 'verify' && (
           <VerifyEmailScreen email={email} onBack={() => go('join')} onVerify={() => go('verified')} />
