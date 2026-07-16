@@ -5,15 +5,24 @@ import { StatusBar } from './StatusBar';
 import { RoleChip, Role } from './RoleSwitcher';
 import { colors } from '../theme';
 
-// Top nav: brand lockup on the left, current-view chip on the right (so the
-// active parent/teacher view is always visible), thin warm divider underneath.
-export function AppHeader({ role, onRolePress }: { role: Role; onRolePress: () => void }) {
+// Top nav: brand lockup on the left, current-view chip on the right, thin warm
+// divider underneath. The role chip only renders for dual-role accounts (a
+// teacher who is also a parent); single-role users never see role UI.
+export function AppHeader({
+  role,
+  onRolePress,
+  showRole = true,
+}: {
+  role: Role;
+  onRolePress: () => void;
+  showRole?: boolean;
+}) {
   return (
     <View style={styles.wrap}>
       <StatusBar />
       <View style={styles.topNav}>
         <Logo />
-        <RoleChip role={role} onPress={onRolePress} />
+        {showRole ? <RoleChip role={role} onPress={onRolePress} /> : <View />}
       </View>
     </View>
   );

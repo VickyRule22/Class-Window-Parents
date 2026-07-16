@@ -30,16 +30,25 @@ type SubScreen =
 export function ProfileScreen({
   onSignOut,
   role,
+  roles,
   onRoleChange,
+  onStartTeacherSetup,
+  onBecameParent,
   onOpenClass,
   onReportPost,
 }: {
   onSignOut: () => void;
   role: Role;
+  // which roles this account has actually earned (by how they got in);
+  // the parent/teacher switcher only exists when it holds both
+  roles: { parent: boolean; teacher: boolean };
   onRoleChange: (r: Role) => void;
+  onStartTeacherSetup?: () => void;
+  onBecameParent?: () => void;
   onOpenClass?: (key: string) => void;
   onReportPost?: () => void;
 }) {
+  const dualRole = roles.parent && roles.teacher;
   const stack = useRef<SubScreen[]>(['hub']);
   const [screen, setScreen] = useState<SubScreen>('hub');
   const [direction, setDirection] = useState(1);
@@ -68,11 +77,13 @@ export function ProfileScreen({
     setDirection(-1);
     setScreen(stack.current[stack.current.length - 1]);
   };
-  // after joining, land on My classrooms rather than replaying the code entry
+  // after joining, land on My classrooms rather than replaying the code entry;
+  // a teacher joining their kid's classroom just earned the parent role
   const backToClassrooms = () => {
     stack.current = ['hub', 'classrooms'];
     setDirection(-1);
     setScreen('classrooms');
+    if (!roles.parent) onBecameParent?.();
   };
 
   return (
@@ -114,8 +125,35 @@ export function ProfileScreen({
                 </View>
               </View>
 
-              {/* one account can be both parent and teacher */}
-              <RoleSwitcher role={role} onChange={onRoleChange} />
+              {/* the switcher is earned, not offered: it only appears once this
+                  account actually holds both roles. Single-role accounts get an
+                  add-the-other-role entry point instead. */}
+              {dualRole ? (
+                <RoleSwitcher role={role} onChange={onRoleChange} />
+              ) : (
+                <View>
+                  <SectionLabel>ALSO AT A SCHOOL?</SectionLabel>
+                  <Card>
+                    {roles.parent ? (
+                      <Row
+                        icon="school-outline"
+                        title="I'm also a teacher"
+                        sub="Create your classroom to share moments"
+                        onPress={onStartTeacherSetup}
+                        last
+                      />
+                    ) : (
+                      <Row
+                        icon="people-outline"
+                        title="I'm also a parent"
+                        sub="Join your child's classroom with a code"
+                        onPress={() => go('join')}
+                        last
+                      />
+                    )}
+                  </Card>
+                </View>
+              )}
 
               <View style={styles.section}>
                 <SectionLabel>FAMILY</SectionLabel>

@@ -43,7 +43,13 @@ export default function App() {
   const [direction, setDirection] = useState(1);
   const [reportOpen, setReportOpen] = useState(false);
   const [feedFilter, setFeedFilter] = useState('all');
+  // active view + which roles this account has actually earned. Roles come
+  // from how you got in (parent code vs classroom setup), never a free toggle;
+  // the in-app switcher only appears once an account holds both.
   const [role, setRole] = useState<Role>('parent');
+  const [hasParentRole, setHasParentRole] = useState(false);
+  const [hasTeacherRole, setHasTeacherRole] = useState(false);
+  const dualRole = hasParentRole && hasTeacherRole;
 
   // teacher first-run: create a classroom, then get nudged into a first post
   const [classroomName, setClassroomName] = useState<string | null>(null);
@@ -71,11 +77,21 @@ export default function App() {
     setFeedFilter('all');
     setReportOpen(false);
     setRole('parent');
+    setHasParentRole(false);
+    setHasTeacherRole(false);
     setClassroomName(null);
     setTeacherPosts([]);
     setPickerOpen(false);
     setComposePhoto(null);
     setJustPosted(false);
+  };
+
+  // parent adds their teacher side: run the classroom first-run; the teacher
+  // role is granted when the classroom actually exists
+  const startTeacherSetup = () => {
+    setRole('teacher');
+    setTab('feed');
+    if (classroomName) setHasTeacherRole(true);
   };
 
   // teacher picked a photo and wrote a caption: it lands on the feed
@@ -115,11 +131,15 @@ export default function App() {
     changeTab(dest);
   };
 
-  // switching persona from the bar also drops you into the app if you're
-  // still on onboarding, so the switch is always one tap
+  // the viewport pills simulate GETTING IN as that persona: a fresh
+  // single-role account. Dual role is only reachable in-app, by earning the
+  // second role from the profile (create a classroom / join with a code).
   const switchRole = (r: Role) => {
     setRole(r);
+    setHasParentRole(r === 'parent');
+    setHasTeacherRole(r === 'teacher');
     if (!onboarded) setOnboarded(true);
+    if (tab === 'profile') setTab('feed');
   };
 
   const [fontsLoaded] = useFonts({
@@ -150,19 +170,31 @@ export default function App() {
         />
         <DeviceFrame>
           {!onboarded ? (
-            <OnboardingFlow onDone={() => setOnboarded(true)} />
+            // the sign-up flow is the parent way in, so finishing it earns the parent role
+            <OnboardingFlow
+              onDone={() => {
+                setOnboarded(true);
+                setHasParentRole(true);
+              }}
+            />
           ) : role === 'teacher' && !classroomName ? (
-            // teacher first-run: verified email, straight into naming the classroom
+            // teacher first-run: verified email, straight into naming the classroom.
+            // Creating it is what earns the teacher role.
             <>
-              <AppHeader role={role} onRolePress={() => {}} />
+              <AppHeader role={role} onRolePress={() => {}} showRole={dualRole} />
               <View style={styles.screen}>
-                <CreateClassroomScreen onCreate={setClassroomName} />
+                <CreateClassroomScreen
+                  onCreate={(name) => {
+                    setClassroomName(name);
+                    setHasTeacherRole(true);
+                  }}
+                />
               </View>
             </>
           ) : composePhoto && classroomName ? (
             // focused caption + share step, no tab bar to wander off to
             <>
-              <AppHeader role={role} onRolePress={() => {}} />
+              <AppHeader role={role} onRolePress={() => {}} showRole={dualRole} />
               <View style={styles.screen}>
                 <ComposeScreen
                   photo={composePhoto}
@@ -177,7 +209,11 @@ export default function App() {
             </>
           ) : (
             <>
-              <AppHeader role={role} onRolePress={() => changeTab('profile')} />
+              <AppHeader
+                role={role}
+                onRolePress={() => changeTab('profile')}
+                showRole={dualRole}
+              />
               <View style={styles.screen}>
                 <ScreenTransition transitionKey={`${tab}-${role}`} direction={direction}>
                   {tab === 'feed' && role === 'teacher' && classroomName ? (
@@ -203,7 +239,10 @@ export default function App() {
                     <ProfileScreen
                       onSignOut={signOut}
                       role={role}
+                      roles={{ parent: hasParentRole, teacher: hasTeacherRole }}
                       onRoleChange={setRole}
+                      onStartTeacherSetup={startTeacherSetup}
+                      onBecameParent={() => setHasParentRole(true)}
                       onOpenClass={openClass}
                       onReportPost={() => setReportOpen(true)}
                     />
