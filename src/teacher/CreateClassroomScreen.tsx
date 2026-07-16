@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, font, shadowSoft } from '../theme';
 import { noOutline } from '../onboarding/ui';
 
@@ -13,9 +14,17 @@ const SUGGESTIONS = [
   'Room 14',
 ];
 
-export function CreateClassroomScreen({ onCreate }: { onCreate: (name: string) => void }) {
+export function CreateClassroomScreen({
+  onCreate,
+  onCancel,
+}: {
+  onCreate: (name: string) => void;
+  // present when a teacher who already has classrooms is adding another
+  onCancel?: () => void;
+}) {
   const [name, setName] = useState('');
   const ready = name.trim().length > 0;
+  const addingAnother = !!onCancel;
 
   return (
     <ScrollView
@@ -23,9 +32,21 @@ export function CreateClassroomScreen({ onCreate }: { onCreate: (name: string) =
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
+      {addingAnother && (
+        <Pressable
+          onPress={onCancel}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.primaryDeep} />
+        </Pressable>
+      )}
       <View style={styles.hero}>
         <Text style={styles.emoji}>🏫</Text>
-        <Text style={styles.title}>You're in! Let's make{'\n'}your classroom</Text>
+        <Text style={styles.title}>
+          {addingAnother ? 'Add another\nclassroom' : "You're in! Let's make\nyour classroom"}
+        </Text>
         <Text style={styles.sub}>
           Give it a name families will recognize.{'\n'}You can always change it later.
         </Text>
@@ -57,13 +78,28 @@ export function CreateClassroomScreen({ onCreate }: { onCreate: (name: string) =
       >
         <Text style={styles.ctaTxt}>Create my classroom</Text>
       </Pressable>
-      <Text style={styles.foot}>Families join later with a code only you hand out.</Text>
+      <Text style={styles.foot}>
+        Each classroom gets its own three-word join code. You approve every family that
+        uses it.
+      </Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingBottom: 40, gap: 18, flexGrow: 1, justifyContent: 'center' },
+  backBtn: {
+    position: 'absolute',
+    top: 10,
+    left: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: colors.pillInactive,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
   hero: { alignItems: 'center', gap: 10 },
   emoji: { fontSize: 52 },
   title: {

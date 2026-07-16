@@ -4,12 +4,13 @@ import { colors, font } from '../../theme';
 import { noOutline } from '../../onboarding/ui';
 import { SubHeader, PrimaryButton, QuietButton } from './ui';
 
-const CODE_LEN = 6;
+const WORD_HINTS = ['maple', 'otter', 'sunny'];
 
-// Join with a teacher-issued classroom code. QA-notes rules: the join button
+// Join with a teacher-issued three-word code. QA-notes rules: the join button
 // stays disabled until the code is complete, there is no code-sharing prompt
 // anywhere (codes come from the teacher, one per family member), and the
-// no-code path asks the teacher instead of dead-ending.
+// no-code path asks the teacher instead of dead-ending. Joins are
+// teacher-approved, so a forwarded code alone gets nobody in.
 export function JoinClassroomScreen({
   onBack,
   onJoined,
@@ -19,18 +20,16 @@ export function JoinClassroomScreen({
   onJoined: () => void;
   notify: (msg: string) => void;
 }) {
-  const [code, setCode] = useState<string[]>(Array(CODE_LEN).fill(''));
+  const [words, setWords] = useState<string[]>(['', '', '']);
   const inputs = useRef<(TextInput | null)[]>([]);
 
   const setAt = (i: number, v: string) => {
-    const ch = v.slice(-1).toUpperCase();
-    const next = [...code];
-    next[i] = ch;
-    setCode(next);
-    if (ch && i < CODE_LEN - 1) inputs.current[i + 1]?.focus();
+    const next = [...words];
+    next[i] = v.toLowerCase().replace(/[^a-z]/g, '');
+    setWords(next);
   };
 
-  const complete = code.every((c) => c.trim());
+  const complete = words.every((w) => w.trim());
 
   return (
     <View style={{ flex: 1 }}>
@@ -40,26 +39,28 @@ export function JoinClassroomScreen({
           <Text style={styles.emoji}>✉️</Text>
           <Text style={styles.title}>Enter your classroom code</Text>
           <Text style={styles.sub}>
-            Your teacher gives each family{'\n'}their own {CODE_LEN}-character code.
+            Your teacher gives each family a code{'\n'}made of three little words.
           </Text>
         </View>
 
         <View style={styles.boxes}>
-          {code.map((c, i) => (
+          {words.map((w, i) => (
             <TextInput
               key={i}
               ref={(r) => {
                 inputs.current[i] = r;
               }}
-              value={c}
+              value={w}
               onChangeText={(v) => setAt(i, v)}
-              maxLength={1}
-              autoCapitalize="characters"
+              placeholder={WORD_HINTS[i]}
+              placeholderTextColor={colors.textMuted3}
+              autoCapitalize="none"
+              onSubmitEditing={() => inputs.current[i + 1]?.focus()}
               style={[styles.box, noOutline]}
             />
           ))}
         </View>
-        <Text style={styles.hint}>Codes aren't case-sensitive.</Text>
+        <Text style={styles.hint}>Your teacher approves the join, so it may take a moment.</Text>
 
         <PrimaryButton
           label="Join classroom"
@@ -90,17 +91,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  boxes: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 6 },
+  boxes: { flexDirection: 'row', gap: 8, marginTop: 6 },
   box: {
-    width: 44,
-    height: 54,
+    flex: 1,
+    height: 50,
     borderWidth: 1.5,
     borderColor: colors.divider,
     borderRadius: 12,
     backgroundColor: colors.white,
     textAlign: 'center',
     fontFamily: font.heading,
-    fontSize: 20,
+    fontSize: 16,
     color: colors.textDark,
   },
   hint: {

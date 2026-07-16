@@ -35,6 +35,18 @@ import { ComposeScreen } from './src/teacher/ComposeScreen';
 import { colors, avatarGradients } from './src/theme';
 import type { Post } from './src/data';
 
+export type Classroom = { name: string; code: string };
+
+// Join codes are three random words: harder to guess than 6 characters and
+// easier to type. Forwarding is handled socially (teacher approves every join,
+// and can rotate the code), not by making the code cryptic.
+const CODE_WORDS = [
+  'maple', 'otter', 'sunny', 'river', 'tiger', 'lemon',
+  'cloud', 'panda', 'berry', 'frost', 'wagon', 'daisy',
+];
+const makeCode = () =>
+  Array.from({ length: 3 }, () => CODE_WORDS[Math.floor(Math.random() * CODE_WORDS.length)]).join('-');
+
 const TAB_ORDER: TabKey[] = ['feed', 'classes', 'wishlists', 'profile'];
 
 export default function App() {
@@ -58,8 +70,11 @@ export default function App() {
   // so their feed shows a create-your-classroom banner until they do (or dismiss)
   const [inviteDismissed, setInviteDismissed] = useState(false);
 
-  // teacher first-run: create a classroom, then get nudged into a first post
-  const [classroomName, setClassroomName] = useState<string | null>(null);
+  // teacher first-run: create a classroom, then get nudged into a first post.
+  // Teachers can run several classrooms; each carries its own join code.
+  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+  const [creatingClassroom, setCreatingClassroom] = useState(false);
+  const [joinRequest, setJoinRequest] = useState<'pending' | 'handled'>('pending');
   const [teacherPosts, setTeacherPosts] = useState<Post[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [composePhoto, setComposePhoto] = useState<PickedPhoto | null>(null);
@@ -88,7 +103,9 @@ export default function App() {
     setHasTeacherRole(false);
     setParentJoined(false);
     setInviteDismissed(false);
-    setClassroomName(null);
+    setClassrooms([]);
+    setCreatingClassroom(false);
+    setJoinRequest('pending');
     setTeacherPosts([]);
     setPickerOpen(false);
     setComposePhoto(null);
@@ -96,22 +113,35 @@ export default function App() {
   };
 
   // parent adds their teacher side: run the classroom first-run; the teacher
-  // role is granted when the classroom actually exists
+  // role is granted when a classroom actually exists
   const startTeacherSetup = () => {
     setRole('teacher');
     setTab('feed');
-    if (classroomName) setHasTeacherRole(true);
+    if (classrooms.length > 0) setHasTeacherRole(true);
   };
 
-  // teacher picked a photo and wrote a caption: it lands on the feed
-  const sharePost = (caption: string) => {
-    if (!composePhoto || !classroomName) return;
+  const addClassroom = (name: string) => {
+    setClassrooms((prev) => [...prev, { name, code: makeCode() }]);
+    setHasTeacherRole(true);
+    setCreatingClassroom(false);
+  };
+
+  // rotating kills the old code instantly; anyone who already joined stays
+  const rotateCode = (index: number) => {
+    setClassrooms((prev) =>
+      prev.map((c, i) => (i === index ? { ...c, code: makeCode() } : c)),
+    );
+  };
+
+  // teacher picked a photo, wrote a caption, and chose which classroom gets it
+  const sharePost = (caption: string, classroom: string) => {
+    if (!composePhoto) return;
     const post: Post = {
       id: `t${Date.now()}`,
       initials: 'SC',
       gradient: avatarGradients.peach,
       name: 'Ms. Sarah Chen',
-      meta: classroomName,
+      meta: classroom,
       time: 'Just now',
       imageColor: composePhoto.tint,
       image: composePhoto.image,
@@ -190,28 +220,28 @@ export default function App() {
                 setHasParentRole(true);
               }}
             />
-          ) : role === 'teacher' && !classroomName ? (
-            // teacher first-run: verified email, straight into naming the classroom.
-            // Creating it is what earns the teacher role.
+          ) : role === 'teacher' && (classrooms.length === 0 || creatingClassroom) ? (
+            // teacher first-run (or adding another classroom): name it.
+            // Creating the first one is what earns the teacher role.
             <>
               <AppHeader role={role} onRolePress={() => {}} showRole={dualRole} />
               <View style={styles.screen}>
                 <CreateClassroomScreen
-                  onCreate={(name) => {
-                    setClassroomName(name);
-                    setHasTeacherRole(true);
-                  }}
+                  onCreate={addClassroom}
+                  onCancel={
+                    classrooms.length > 0 ? () => setCreatingClassroom(false) : undefined
+                  }
                 />
               </View>
             </>
-          ) : composePhoto && classroomName ? (
+          ) : composePhoto && classrooms.length > 0 ? (
             // focused caption + share step, no tab bar to wander off to
             <>
               <AppHeader role={role} onRolePress={() => {}} showRole={dualRole} />
               <View style={styles.screen}>
                 <ComposeScreen
                   photo={composePhoto}
-                  classroomName={classroomName}
+                  classrooms={classrooms.map((c) => c.name)}
                   onBack={() => {
                     setComposePhoto(null);
                     setPickerOpen(true);
@@ -229,11 +259,13 @@ export default function App() {
               />
               <View style={styles.screen}>
                 <ScreenTransition transitionKey={`${tab}-${role}`} direction={direction}>
-                  {tab === 'feed' && role === 'teacher' && classroomName ? (
+                  {tab === 'feed' && role === 'teacher' && classrooms.length > 0 ? (
                     <TeacherFeedScreen
-                      classroomName={classroomName}
+                      classrooms={classrooms.map((c) => c.name)}
                       posts={teacherPosts}
                       justPosted={justPosted}
+                      joinRequest={joinRequest === 'pending'}
+                      onJoinHandled={() => setJoinRequest('handled')}
                       onNewPost={() => setPickerOpen(true)}
                       onReport={() => setReportOpen(true)}
                     />
@@ -270,6 +302,12 @@ export default function App() {
                       onBecameParent={() => {
                         setHasParentRole(true);
                         setParentJoined(true);
+                      }}
+                      teacherClassrooms={classrooms}
+                      onRotateCode={rotateCode}
+                      onAddClassroom={() => {
+                        setCreatingClassroom(true);
+                        setTab('feed');
                       }}
                       onOpenClass={openClass}
                       onReportPost={() => setReportOpen(true)}

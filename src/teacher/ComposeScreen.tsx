@@ -5,19 +5,21 @@ import { colors, font, shadowSoft } from '../theme';
 import { noOutline } from '../onboarding/ui';
 import type { PickedPhoto } from './PhotoPickerSheet';
 
-// Caption + share. The photo is already chosen; one field, one button.
+// Caption + share. The photo is already chosen; one field, one button, and a
+// classroom picker when the teacher runs more than one room.
 export function ComposeScreen({
   photo,
-  classroomName,
+  classrooms,
   onBack,
   onShare,
 }: {
   photo: PickedPhoto;
-  classroomName: string;
+  classrooms: string[];
   onBack: () => void;
-  onShare: (caption: string) => void;
+  onShare: (caption: string, classroom: string) => void;
 }) {
   const [caption, setCaption] = useState('');
+  const [target, setTarget] = useState(classrooms[0]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.appBg }}>
@@ -32,7 +34,7 @@ export function ComposeScreen({
           <Ionicons name="chevron-back" size={20} color={colors.primaryDeep} />
         </Pressable>
         <Text style={styles.title}>New post</Text>
-        <Text style={styles.meta}>{classroomName}</Text>
+        <Text style={styles.meta}>{target}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
@@ -43,6 +45,26 @@ export function ComposeScreen({
             <Text style={styles.swapTxt}>Change</Text>
           </Pressable>
         </View>
+
+        {classrooms.length > 1 && (
+          <View style={styles.card}>
+            <Text style={styles.label}>POST TO</Text>
+            <View style={styles.targetRow}>
+              {classrooms.map((c) => {
+                const on = c === target;
+                return (
+                  <Pressable
+                    key={c}
+                    onPress={() => setTarget(c)}
+                    style={[styles.targetChip, on && styles.targetChipOn]}
+                  >
+                    <Text style={[styles.targetTxt, on && styles.targetTxtOn]}>{c}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.label}>CAPTION</Text>
@@ -57,11 +79,11 @@ export function ComposeScreen({
           />
         </View>
 
-        <Pressable style={styles.share} onPress={() => onShare(caption.trim())}>
+        <Pressable style={styles.share} onPress={() => onShare(caption.trim(), target)}>
           <Ionicons name="paper-plane" size={18} color={colors.white} />
           <Text style={styles.shareTxt}>Share to the feed</Text>
         </Pressable>
-        <Text style={styles.foot}>Goes to every family in {classroomName}.</Text>
+        <Text style={styles.foot}>Goes to every family in {target}.</Text>
       </ScrollView>
     </View>
   );
@@ -105,6 +127,23 @@ const styles = StyleSheet.create({
   swapTxt: { fontFamily: font.bold, fontSize: 11.5, color: colors.white },
 
   card: { backgroundColor: colors.white, borderRadius: 16, padding: 14, ...shadowSoft },
+  targetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  targetChip: {
+    backgroundColor: colors.pillInactive,
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  targetChipOn: {
+    backgroundColor: colors.brandSolid,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  targetTxt: { fontFamily: font.bold, fontSize: 13, color: colors.textDark2 },
+  targetTxtOn: { color: colors.white },
   label: {
     fontFamily: font.headingBold,
     fontSize: 11,

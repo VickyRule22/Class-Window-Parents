@@ -11,18 +11,24 @@ const IDEAS = ['First-day smiles 😊', 'Art projects 🎨', 'Science wins 🔬'
 // big bouncing button to share it. After that, it's their classroom feed with
 // a quieter new-post button up top.
 export function TeacherFeedScreen({
-  classroomName,
+  classrooms,
   posts,
   justPosted,
+  joinRequest,
+  onJoinHandled,
   onNewPost,
   onReport,
 }: {
-  classroomName: string;
+  classrooms: string[];
   posts: Post[];
   justPosted: boolean;
+  // teacher-approved joins: a parent used the code, teacher confirms them in
+  joinRequest?: boolean;
+  onJoinHandled?: () => void;
   onNewPost: () => void;
   onReport: () => void;
 }) {
+  const headline = classrooms.length === 1 ? classrooms[0] : 'Your classrooms';
   const bob = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(0)).current;
 
@@ -55,7 +61,7 @@ export function TeacherFeedScreen({
         <Animated.Text style={[styles.bigEmoji, { transform: [{ translateY: bobY }] }]}>
           📸
         </Animated.Text>
-        <Text style={styles.emptyTitle}>{classroomName} is ready!</Text>
+        <Text style={styles.emptyTitle}>{classrooms[classrooms.length - 1]} is ready!</Text>
         <Text style={styles.emptySub}>
           Share your first classroom moment.{'\n'}Families are excited to peek inside.
         </Text>
@@ -86,11 +92,31 @@ export function TeacherFeedScreen({
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.greeting}>
-        <Text style={styles.hi}>{classroomName}</Text>
+        <Text style={styles.hi}>{headline}</Text>
         <Text style={styles.sub}>
           {posts.length} {posts.length === 1 ? 'moment' : 'moments'} shared with families
         </Text>
       </View>
+
+      {/* teacher-approved join: codes can be forwarded, so nobody gets in
+          until the teacher says yes */}
+      {joinRequest && (
+        <View style={styles.joinCard}>
+          <Text style={styles.joinEmoji}>🙋</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.joinTitle}>Dana P. wants to join {classrooms[0]}</Text>
+            <Text style={styles.joinSub}>They entered your classroom code just now.</Text>
+            <View style={styles.joinActions}>
+              <Pressable style={styles.approveBtn} onPress={onJoinHandled}>
+                <Text style={styles.approveTxt}>Approve</Text>
+              </Pressable>
+              <Pressable style={styles.declineBtn} onPress={onJoinHandled}>
+                <Text style={styles.declineTxt}>Decline</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
 
       {justPosted && (
         <View style={styles.liveBanner}>
@@ -161,6 +187,30 @@ const styles = StyleSheet.create({
   greeting: { paddingHorizontal: 20, paddingVertical: 8 },
   hi: { fontFamily: font.heading, fontSize: 20, color: colors.textDark },
   sub: { fontFamily: font.semibold, fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  joinCard: {
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.cardBorderPeach,
+    borderRadius: 16,
+    padding: 14,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  joinEmoji: { fontSize: 22 },
+  joinTitle: { fontFamily: font.headingBold, fontSize: 14.5, color: colors.textDark },
+  joinSub: { fontFamily: font.regular, fontSize: 12.5, color: colors.textMuted, marginTop: 2 },
+  joinActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 },
+  approveBtn: {
+    backgroundColor: colors.brandSolid,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  approveTxt: { fontFamily: font.heading, fontSize: 12.5, color: colors.white },
+  declineBtn: { paddingVertical: 8 },
+  declineTxt: { fontFamily: font.bold, fontSize: 12.5, color: colors.textMuted },
   liveBanner: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -4,24 +4,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, font, shadowSoft } from '../theme';
 import { noOutline } from '../onboarding/ui';
 
-const CODE_LEN = 6;
+// Join codes are three random words: harder to guess than 6 characters and
+// far easier to type on a phone.
+const WORD_HINTS = ['maple', 'otter', 'sunny'];
 
 // A brand-new parent's home: no classroom yet, so the feed IS the join step.
 // Type the teacher's code or scan the QR from the welcome note; either one
-// drops them straight into their child's feed.
+// sends a join request for the teacher to approve.
 export function ParentJoinScreen({ onJoined }: { onJoined: () => void }) {
-  const [code, setCode] = useState<string[]>(Array(CODE_LEN).fill(''));
+  const [words, setWords] = useState<string[]>(['', '', '']);
   const inputs = useRef<(TextInput | null)[]>([]);
 
   const setAt = (i: number, v: string) => {
-    const ch = v.slice(-1).toUpperCase();
-    const next = [...code];
-    next[i] = ch;
-    setCode(next);
-    if (ch && i < CODE_LEN - 1) inputs.current[i + 1]?.focus();
+    const next = [...words];
+    next[i] = v.toLowerCase().replace(/[^a-z]/g, '');
+    setWords(next);
   };
 
-  const complete = code.every((c) => c.trim());
+  const complete = words.every((w) => w.trim());
 
   return (
     <ScrollView
@@ -32,22 +32,24 @@ export function ParentJoinScreen({ onJoined }: { onJoined: () => void }) {
       <Text style={styles.emoji}>🎒</Text>
       <Text style={styles.title}>Let's find your{'\n'}child's classroom</Text>
       <Text style={styles.sub}>
-        Your teacher sent home a welcome note with{'\n'}a code and a QR square. Either works!
+        Your teacher sent home a welcome note with{'\n'}three little words and a QR square.
       </Text>
 
       <View style={styles.card}>
-        <Text style={styles.label}>CLASSROOM CODE</Text>
+        <Text style={styles.label}>THREE-WORD CODE</Text>
         <View style={styles.boxes}>
-          {code.map((c, i) => (
+          {words.map((w, i) => (
             <TextInput
               key={i}
               ref={(r) => {
                 inputs.current[i] = r;
               }}
-              value={c}
+              value={w}
               onChangeText={(v) => setAt(i, v)}
-              maxLength={1}
-              autoCapitalize="characters"
+              placeholder={WORD_HINTS[i]}
+              placeholderTextColor={colors.textMuted3}
+              autoCapitalize="none"
+              onSubmitEditing={() => inputs.current[i + 1]?.focus()}
               style={[styles.box, noOutline]}
             />
           ))}
@@ -115,17 +117,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     color: colors.textMuted,
   },
-  boxes: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
+  boxes: { flexDirection: 'row', gap: 8 },
   box: {
-    width: 44,
-    height: 54,
+    flex: 1,
+    height: 50,
     borderWidth: 1.5,
     borderColor: colors.divider,
     borderRadius: 12,
     backgroundColor: colors.white,
     textAlign: 'center',
     fontFamily: font.heading,
-    fontSize: 20,
+    fontSize: 16,
     color: colors.textDark,
   },
   join: {

@@ -8,7 +8,9 @@ import { colors, font, shadowSoft } from '../theme';
 import { SectionLabel, Card, Row, Toast } from './profile/ui';
 import { PersonalInfoScreen } from './profile/PersonalInfoScreen';
 import { ClassroomsScreen } from './profile/ClassroomsScreen';
+import { TeacherClassroomsScreen } from './profile/TeacherClassroomsScreen';
 import { JoinClassroomScreen } from './profile/JoinClassroomScreen';
+import type { Classroom } from '../../App';
 import { PrivacySecurityScreen } from './profile/PrivacySecurityScreen';
 import { ChangePasswordScreen } from './profile/ChangePasswordScreen';
 import { HelpSupportScreen } from './profile/HelpSupportScreen';
@@ -34,6 +36,9 @@ export function ProfileScreen({
   onRoleChange,
   onStartTeacherSetup,
   onBecameParent,
+  teacherClassrooms,
+  onRotateCode,
+  onAddClassroom,
   onOpenClass,
   onReportPost,
 }: {
@@ -45,10 +50,14 @@ export function ProfileScreen({
   onRoleChange: (r: Role) => void;
   onStartTeacherSetup?: () => void;
   onBecameParent?: () => void;
+  teacherClassrooms?: Classroom[];
+  onRotateCode?: (index: number) => void;
+  onAddClassroom?: () => void;
   onOpenClass?: (key: string) => void;
   onReportPost?: () => void;
 }) {
   const dualRole = roles.parent && roles.teacher;
+  const teacherView = role === 'teacher' && (teacherClassrooms?.length ?? 0) > 0;
   const stack = useRef<SubScreen[]>(['hub']);
   const [screen, setScreen] = useState<SubScreen>('hub');
   const [direction, setDirection] = useState(1);
@@ -114,12 +123,19 @@ export function ProfileScreen({
                   </Pressable>
                 </View>
                 <View style={styles.chipRow}>
-                  {classes.map((c) => (
-                    <View key={c.id} style={styles.classChip}>
-                      <Avatar initials={c.initials} gradient={c.gradient} size={22} fontSize={9} />
-                      <Text style={styles.classChipTxt}>{c.meta.split(' · ')[0]}</Text>
-                    </View>
-                  ))}
+                  {teacherView
+                    ? teacherClassrooms!.map((c) => (
+                        <View key={c.name} style={styles.classChip}>
+                          <Text style={{ fontSize: 12 }}>🏫</Text>
+                          <Text style={styles.classChipTxt}>{c.name}</Text>
+                        </View>
+                      ))
+                    : classes.map((c) => (
+                        <View key={c.id} style={styles.classChip}>
+                          <Avatar initials={c.initials} gradient={c.gradient} size={22} fontSize={9} />
+                          <Text style={styles.classChipTxt}>{c.meta.split(' · ')[0]}</Text>
+                        </View>
+                      ))}
                 </View>
               </View>
 
@@ -154,21 +170,33 @@ export function ProfileScreen({
               )}
 
               <View style={styles.section}>
-                <SectionLabel>FAMILY</SectionLabel>
+                <SectionLabel>{teacherView ? 'MY SCHOOL' : 'FAMILY'}</SectionLabel>
                 <Card>
-                  <Row
-                    icon="school-outline"
-                    title="My classrooms"
-                    sub={`${classes.length} joined at Lincoln Elementary`}
-                    onPress={() => go('classrooms')}
-                  />
-                  <Row
-                    icon="add-circle-outline"
-                    title="Join a classroom"
-                    sub="Enter a code from your teacher"
-                    onPress={() => go('join')}
-                    last
-                  />
+                  {teacherView ? (
+                    <Row
+                      icon="school-outline"
+                      title="My classrooms"
+                      sub={`${teacherClassrooms!.length} you teach · join codes inside`}
+                      onPress={() => go('classrooms')}
+                      last
+                    />
+                  ) : (
+                    <>
+                      <Row
+                        icon="school-outline"
+                        title="My classrooms"
+                        sub={`${classes.length} joined at Lincoln Elementary`}
+                        onPress={() => go('classrooms')}
+                      />
+                      <Row
+                        icon="add-circle-outline"
+                        title="Join a classroom"
+                        sub="Enter the code from your teacher"
+                        onPress={() => go('join')}
+                        last
+                      />
+                    </>
+                  )}
                 </Card>
               </View>
 
@@ -214,14 +242,23 @@ export function ProfileScreen({
         )}
 
         {screen === 'personal' && <PersonalInfoScreen onBack={back} notify={notify} />}
-        {screen === 'classrooms' && (
-          <ClassroomsScreen
-            onBack={back}
-            onJoin={() => go('join')}
-            onOpenClass={onOpenClass}
-            notify={notify}
-          />
-        )}
+        {screen === 'classrooms' &&
+          (teacherView ? (
+            <TeacherClassroomsScreen
+              classrooms={teacherClassrooms!}
+              onBack={back}
+              onRotate={(i) => onRotateCode?.(i)}
+              onAdd={() => onAddClassroom?.()}
+              notify={notify}
+            />
+          ) : (
+            <ClassroomsScreen
+              onBack={back}
+              onJoin={() => go('join')}
+              onOpenClass={onOpenClass}
+              notify={notify}
+            />
+          ))}
         {screen === 'join' && (
           <JoinClassroomScreen onBack={back} onJoined={backToClassrooms} notify={notify} />
         )}
