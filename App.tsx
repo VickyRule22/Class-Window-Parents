@@ -18,6 +18,7 @@ import {
 import { AppHeader } from './src/components/AppHeader';
 import { DeviceFrame } from './src/components/DeviceFrame';
 import { BottomNav, TabKey } from './src/components/BottomNav';
+import { PrototypeNav, NavLocation } from './src/components/PrototypeNav';
 import { Role } from './src/components/RoleSwitcher';
 import { ScreenTransition } from './src/components/ScreenTransition';
 import { ReportModal } from './src/components/ReportModal';
@@ -60,6 +61,29 @@ export default function App() {
     setRole('parent');
   };
 
+  // prototype nav: jump anywhere, any time (user control and freedom)
+  const jumpTo = (dest: NavLocation) => {
+    if (dest === 'signup') {
+      setOnboarded(false);
+      setTab('feed');
+      setReportOpen(false);
+      return;
+    }
+    if (!onboarded) {
+      setOnboarded(true);
+      setTab(dest);
+      return;
+    }
+    changeTab(dest);
+  };
+
+  // switching persona from the bar also drops you into the app if you're
+  // still on onboarding, so the switch is always one tap
+  const switchRole = (r: Role) => {
+    setRole(r);
+    if (!onboarded) setOnboarded(true);
+  };
+
   const [fontsLoaded] = useFonts({
     'Nunito-Bold': Nunito_700Bold,
     'Nunito-ExtraBold': Nunito_800ExtraBold,
@@ -79,6 +103,12 @@ export default function App() {
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <StatusBar style="dark" />
         <DeviceFrame>
+          <PrototypeNav
+            location={!onboarded ? 'signup' : tab}
+            role={role}
+            onJump={jumpTo}
+            onRole={switchRole}
+          />
           {!onboarded ? (
             <OnboardingFlow onDone={() => setOnboarded(true)} />
           ) : (
