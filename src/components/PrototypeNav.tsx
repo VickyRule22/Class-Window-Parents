@@ -102,6 +102,9 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    // centers the pills on wide viewports; still scrolls on narrow phones
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   tag: {
     fontFamily: font.extrabold,

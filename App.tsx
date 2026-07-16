@@ -102,13 +102,15 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <StatusBar style="dark" />
+        {/* reviewer chrome: lives on the viewport, above the phone mockup,
+            because it's a prototype control, not part of the app */}
+        <PrototypeNav
+          location={!onboarded ? 'signup' : tab}
+          role={role}
+          onJump={jumpTo}
+          onRole={switchRole}
+        />
         <DeviceFrame>
-          <PrototypeNav
-            location={!onboarded ? 'signup' : tab}
-            role={role}
-            onJump={jumpTo}
-            onRole={switchRole}
-          />
           {!onboarded ? (
             <OnboardingFlow onDone={() => setOnboarded(true)} />
           ) : (
