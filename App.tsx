@@ -268,6 +268,9 @@ export default function App() {
                       onJoinHandled={() => setJoinRequest('handled')}
                       onNewPost={() => setPickerOpen(true)}
                       onReport={() => setReportOpen(true)}
+                      onTrashPost={(id) =>
+                        setTeacherPosts((prev) => prev.filter((p) => p.id !== id))
+                      }
                     />
                   ) : tab === 'feed' && !parentJoined ? (
                     // brand-new parent: the feed is the join step until they

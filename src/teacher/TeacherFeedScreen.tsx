@@ -18,6 +18,7 @@ export function TeacherFeedScreen({
   onJoinHandled,
   onNewPost,
   onReport,
+  onTrashPost,
 }: {
   classrooms: string[];
   posts: Post[];
@@ -27,6 +28,8 @@ export function TeacherFeedScreen({
   onJoinHandled?: () => void;
   onNewPost: () => void;
   onReport: () => void;
+  // teacher trashing one of their own posts
+  onTrashPost?: (id: string) => void;
 }) {
   const headline = classrooms.length === 1 ? classrooms[0] : 'Your classrooms';
   const bob = useRef(new Animated.Value(0)).current;
@@ -132,7 +135,12 @@ export function TeacherFeedScreen({
 
       <View style={styles.cards}>
         {posts.map((p) => (
-          <PostCard key={p.id} post={p} onReport={onReport} />
+          <PostCard
+            key={p.id}
+            post={p}
+            onReport={onReport}
+            onTrash={onTrashPost ? () => onTrashPost(p.id) : undefined}
+          />
         ))}
       </View>
     </ScrollView>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PostCard } from '../components/PostCard';
@@ -18,7 +18,10 @@ export function FeedScreen({
   // nudges them to create their classroom, which unlocks the role switcher
   teacherInvite?: { onSetup: () => void; onDismiss: () => void } | null;
 }) {
-  const visible = filter === 'all' ? posts : posts.filter((p) => p.initials === filter);
+  // posts the parent trashed out of their own feed (doesn't touch anyone else's)
+  const [trashed, setTrashed] = useState<string[]>([]);
+  const pool = posts.filter((p) => !trashed.includes(p.id));
+  const visible = filter === 'all' ? pool : pool.filter((p) => p.initials === filter);
   const activeLabel = feedFilters.find((f) => f.key === filter)?.label ?? '';
   const subtitle =
     filter === 'all'
@@ -81,7 +84,12 @@ export function FeedScreen({
       {/* posts */}
       <View style={styles.feed}>
         {visible.map((p) => (
-          <PostCard key={p.id} post={p} onReport={onReport} />
+          <PostCard
+            key={p.id}
+            post={p}
+            onReport={onReport}
+            onTrash={() => setTrashed((t) => [...t, p.id])}
+          />
         ))}
 
         {/* caught up */}

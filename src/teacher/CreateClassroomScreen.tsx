@@ -5,13 +5,13 @@ import { colors, font, shadowSoft } from '../theme';
 import { noOutline } from '../onboarding/ui';
 
 // First thing a teacher sees after verifying their email: name the classroom.
-// One field, one button. Tappable suggestions compose the name for them
-// (name + grade + subject) so the fastest path is two taps.
-const SUGGESTIONS = [
-  "Ms. Chen's Class",
-  "Ms. Chen's 2nd Grade",
-  '2nd Grade Science',
+// One field, one button. The chips are SAMPLE titles to riff on, not guesses
+// about who the teacher is: tap one, then edit it into your own.
+const SAMPLES = [
+  "Ms. Chen's 2nd Grade Science",
+  "Mr. Lopez's Kindergarten",
   'Room 14',
+  'The Sunflower Room',
 ];
 
 export function CreateClassroomScreen({
@@ -57,13 +57,13 @@ export function CreateClassroomScreen({
         <TextInput
           value={name}
           onChangeText={setName}
-          placeholder="e.g. Ms. Chen's 2nd Grade"
+          placeholder="Your name, grade, or subject"
           placeholderTextColor={colors.textMuted3}
           style={[styles.input, noOutline]}
         />
-        <Text style={styles.hintLabel}>Tap to use:</Text>
+        <Text style={styles.hintLabel}>Sample titles, tap one and make it yours:</Text>
         <View style={styles.chips}>
-          {SUGGESTIONS.map((s) => (
+          {SAMPLES.map((s) => (
             <Pressable key={s} onPress={() => setName(s)} style={styles.chip}>
               <Text style={styles.chipTxt}>{s}</Text>
             </Pressable>
