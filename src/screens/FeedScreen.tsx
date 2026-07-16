@@ -9,10 +9,14 @@ export function FeedScreen({
   onReport,
   filter,
   onFilterChange,
+  teacherInvite,
 }: {
   onReport: () => void;
   filter: string;
   onFilterChange: (key: string) => void;
+  // set when a school admin has added this parent as a teacher: a feed banner
+  // nudges them to create their classroom, which unlocks the role switcher
+  teacherInvite?: { onSetup: () => void; onDismiss: () => void } | null;
 }) {
   const visible = filter === 'all' ? posts : posts.filter((p) => p.initials === filter);
   const activeLabel = feedFilters.find((f) => f.key === filter)?.label ?? '';
@@ -27,6 +31,25 @@ export function FeedScreen({
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
+      {/* admin added this parent as a teacher: nudge to set up the classroom */}
+      {teacherInvite && (
+        <View style={styles.inviteBanner}>
+          <Text style={styles.inviteEmoji}>🎉</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.inviteTitle}>Lincoln Elementary added you as a teacher!</Text>
+            <Text style={styles.inviteSub}>Set up your classroom to start sharing moments.</Text>
+            <View style={styles.inviteActions}>
+              <Pressable style={styles.inviteCta} onPress={teacherInvite.onSetup}>
+                <Text style={styles.inviteCtaTxt}>Create my classroom</Text>
+              </Pressable>
+              <Pressable style={styles.inviteLater} onPress={teacherInvite.onDismiss}>
+                <Text style={styles.inviteLaterTxt}>Not now</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* greeting */}
       <View style={styles.greeting}>
         <Text style={styles.hi}>Good morning ☀️</Text>
@@ -78,6 +101,31 @@ export function FeedScreen({
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 24 },
+  inviteBanner: {
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: colors.settingsIconBg,
+    borderWidth: 1,
+    borderColor: colors.cardBorderPeach,
+    borderRadius: 16,
+    padding: 14,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  inviteEmoji: { fontSize: 22 },
+  inviteTitle: { fontFamily: font.headingBold, fontSize: 14.5, color: colors.textDark },
+  inviteSub: { fontFamily: font.regular, fontSize: 12.5, color: colors.caption, marginTop: 2 },
+  inviteActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 },
+  inviteCta: {
+    backgroundColor: colors.brandSolid,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  inviteCtaTxt: { fontFamily: font.heading, fontSize: 12.5, color: colors.white },
+  inviteLater: { paddingVertical: 8 },
+  inviteLaterTxt: { fontFamily: font.bold, fontSize: 12.5, color: colors.textMuted },
   greeting: { paddingHorizontal: 20, paddingVertical: 8 },
   hi: { fontFamily: font.heading, fontSize: 20, color: colors.textDark },
   sub: { fontFamily: font.semibold, fontSize: 13, color: colors.textMuted, marginTop: 2 },

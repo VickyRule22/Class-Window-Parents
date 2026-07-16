@@ -24,6 +24,7 @@ import { ScreenTransition } from './src/components/ScreenTransition';
 import { ReportModal } from './src/components/ReportModal';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { FeedScreen } from './src/screens/FeedScreen';
+import { ParentJoinScreen } from './src/screens/ParentJoinScreen';
 import { ClassesScreen } from './src/screens/ClassesScreen';
 import { WishlistsScreen } from './src/screens/WishlistsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
@@ -50,6 +51,12 @@ export default function App() {
   const [hasParentRole, setHasParentRole] = useState(false);
   const [hasTeacherRole, setHasTeacherRole] = useState(false);
   const dualRole = hasParentRole && hasTeacherRole;
+  // a fresh parent has no classroom yet: their feed is the join step
+  // (enter the teacher's code or scan the QR from the welcome note)
+  const [parentJoined, setParentJoined] = useState(false);
+  // simulated admin action: this parent was added as a teacher at school,
+  // so their feed shows a create-your-classroom banner until they do (or dismiss)
+  const [inviteDismissed, setInviteDismissed] = useState(false);
 
   // teacher first-run: create a classroom, then get nudged into a first post
   const [classroomName, setClassroomName] = useState<string | null>(null);
@@ -79,6 +86,8 @@ export default function App() {
     setRole('parent');
     setHasParentRole(false);
     setHasTeacherRole(false);
+    setParentJoined(false);
+    setInviteDismissed(false);
     setClassroomName(null);
     setTeacherPosts([]);
     setPickerOpen(false);
@@ -138,6 +147,10 @@ export default function App() {
     setRole(r);
     setHasParentRole(r === 'parent');
     setHasTeacherRole(r === 'teacher');
+    if (r === 'parent') {
+      setParentJoined(false); // fresh parent: feed starts at the join step
+      setInviteDismissed(false);
+    }
     if (!onboarded) setOnboarded(true);
     if (tab === 'profile') setTab('feed');
   };
@@ -224,12 +237,24 @@ export default function App() {
                       onNewPost={() => setPickerOpen(true)}
                       onReport={() => setReportOpen(true)}
                     />
+                  ) : tab === 'feed' && !parentJoined ? (
+                    // brand-new parent: the feed is the join step until they
+                    // enter a code or scan the QR
+                    <ParentJoinScreen onJoined={() => setParentJoined(true)} />
                   ) : (
                     tab === 'feed' && (
                       <FeedScreen
                         onReport={() => setReportOpen(true)}
                         filter={feedFilter}
                         onFilterChange={setFeedFilter}
+                        teacherInvite={
+                          role === 'parent' && !hasTeacherRole && !inviteDismissed
+                            ? {
+                                onSetup: startTeacherSetup,
+                                onDismiss: () => setInviteDismissed(true),
+                              }
+                            : null
+                        }
                       />
                     )
                   )}
@@ -242,7 +267,10 @@ export default function App() {
                       roles={{ parent: hasParentRole, teacher: hasTeacherRole }}
                       onRoleChange={setRole}
                       onStartTeacherSetup={startTeacherSetup}
-                      onBecameParent={() => setHasParentRole(true)}
+                      onBecameParent={() => {
+                        setHasParentRole(true);
+                        setParentJoined(true);
+                      }}
                       onOpenClass={openClass}
                       onReportPost={() => setReportOpen(true)}
                     />

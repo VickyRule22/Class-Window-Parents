@@ -5,7 +5,7 @@ import { RoleSwitcher, Role } from '../components/RoleSwitcher';
 import { ScreenTransition } from '../components/ScreenTransition';
 import { classes } from '../data';
 import { colors, font, shadowSoft } from '../theme';
-import { SectionLabel, Card, Row, Toggle, Toast } from './profile/ui';
+import { SectionLabel, Card, Row, Toast } from './profile/ui';
 import { PersonalInfoScreen } from './profile/PersonalInfoScreen';
 import { ClassroomsScreen } from './profile/ClassroomsScreen';
 import { JoinClassroomScreen } from './profile/JoinClassroomScreen';
@@ -53,8 +53,6 @@ export function ProfileScreen({
   const [screen, setScreen] = useState<SubScreen>('hub');
   const [direction, setDirection] = useState(1);
   const [signOutOpen, setSignOutOpen] = useState(false);
-  // first release keeps notifications to one switch; per-type prefs can come later
-  const [notificationsOn, setNotificationsOn] = useState(true);
   const [toast, setToast] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -177,11 +175,8 @@ export function ProfileScreen({
               <View style={styles.section}>
                 <SectionLabel>ACCOUNT</SectionLabel>
                 <Card>
-                  <Row
-                    icon="notifications-outline"
-                    title="Allow notifications"
-                    right={<Toggle value={notificationsOn} onChange={setNotificationsOn} />}
-                  />
+                  {/* notifications are out of V1 scope; nothing is planned for
+                      them yet, so the profile doesn't promise them */}
                   <Row
                     icon="lock-closed-outline"
                     title="Privacy & security"
