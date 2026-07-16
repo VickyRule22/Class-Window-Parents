@@ -1,0 +1,189 @@
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Pressable, ScrollView, Animated, Easing, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { PostCard } from '../components/PostCard';
+import { colors, font, shadowCard } from '../theme';
+import type { Post } from '../data';
+
+const IDEAS = ['First-day smiles 😊', 'Art projects 🎨', 'Science wins 🔬', 'Story time 📚', 'Recess heroes ⚽'];
+
+// Teacher home. Before the first post it's a pep talk: what to share and one
+// big bouncing button to share it. After that, it's their classroom feed with
+// a quieter new-post button up top.
+export function TeacherFeedScreen({
+  classroomName,
+  posts,
+  justPosted,
+  onNewPost,
+  onReport,
+}: {
+  classroomName: string;
+  posts: Post[];
+  justPosted: boolean;
+  onNewPost: () => void;
+  onReport: () => void;
+}) {
+  const bob = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  // gentle idle motion: camera bobs, button breathes
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bob, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(bob, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    ).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 1100, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    ).start();
+  }, []);
+
+  const bobY = bob.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
+  const pulseScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.045] });
+
+  if (posts.length === 0) {
+    return (
+      <ScrollView
+        style={{ backgroundColor: colors.appBg }}
+        contentContainerStyle={styles.emptyContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.Text style={[styles.bigEmoji, { transform: [{ translateY: bobY }] }]}>
+          📸
+        </Animated.Text>
+        <Text style={styles.emptyTitle}>{classroomName} is ready!</Text>
+        <Text style={styles.emptySub}>
+          Share your first classroom moment.{'\n'}Families are excited to peek inside.
+        </Text>
+
+        <View style={styles.ideas}>
+          {IDEAS.map((idea) => (
+            <View key={idea} style={styles.ideaChip}>
+              <Text style={styles.ideaTxt}>{idea}</Text>
+            </View>
+          ))}
+        </View>
+
+        <Animated.View style={{ transform: [{ scale: pulseScale }], alignSelf: 'stretch' }}>
+          <Pressable style={styles.bigBtn} onPress={onNewPost}>
+            <Ionicons name="camera" size={22} color={colors.white} />
+            <Text style={styles.bigBtnTxt}>Share your first moment</Text>
+          </Pressable>
+        </Animated.View>
+        <Text style={styles.emptyFoot}>Snap a photo or pick one from your library.</Text>
+      </ScrollView>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={{ backgroundColor: colors.appBg }}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.greeting}>
+        <Text style={styles.hi}>{classroomName}</Text>
+        <Text style={styles.sub}>
+          {posts.length} {posts.length === 1 ? 'moment' : 'moments'} shared with families
+        </Text>
+      </View>
+
+      {justPosted && (
+        <View style={styles.liveBanner}>
+          <Ionicons name="checkmark-circle" size={16} color="#2e9e5b" />
+          <Text style={styles.liveTxt}>Your moment is live on the classroom feed 🎉</Text>
+        </View>
+      )}
+
+      <Pressable style={styles.newBtn} onPress={onNewPost}>
+        <Ionicons name="camera" size={18} color={colors.white} />
+        <Text style={styles.newBtnTxt}>New post</Text>
+      </Pressable>
+
+      <View style={styles.cards}>
+        {posts.map((p) => (
+          <PostCard key={p.id} post={p} onReport={onReport} />
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  emptyContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    gap: 14,
+  },
+  bigEmoji: { fontSize: 64 },
+  emptyTitle: {
+    fontFamily: font.heading,
+    fontSize: 23,
+    color: colors.textDark,
+    textAlign: 'center',
+  },
+  emptySub: {
+    fontFamily: font.regular,
+    fontSize: 14.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 21,
+  },
+  ideas: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginVertical: 6 },
+  ideaChip: {
+    backgroundColor: colors.settingsIconBg,
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  ideaTxt: { fontFamily: font.bold, fontSize: 12.5, color: colors.primaryDeep },
+  bigBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.brandSolid,
+    borderRadius: 30,
+    paddingVertical: 18,
+    ...shadowCard,
+  },
+  bigBtnTxt: { fontFamily: font.heading, fontSize: 17, color: colors.white },
+  emptyFoot: { fontFamily: font.regular, fontSize: 12.5, color: colors.textMuted },
+
+  content: { paddingBottom: 32 },
+  greeting: { paddingHorizontal: 20, paddingVertical: 8 },
+  hi: { fontFamily: font.heading, fontSize: 20, color: colors.textDark },
+  sub: { fontFamily: font.semibold, fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  liveBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: '#e9f7ee',
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    marginHorizontal: 16,
+    marginBottom: 10,
+  },
+  liveTxt: { fontFamily: font.bold, fontSize: 12.5, color: '#2e7d4f', flex: 1 },
+  newBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.brandSolid,
+    borderRadius: 24,
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    marginBottom: 14,
+  },
+  newBtnTxt: { fontFamily: font.heading, fontSize: 15, color: colors.white },
+  cards: { paddingHorizontal: 16, gap: 16 },
+});

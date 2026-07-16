@@ -27,7 +27,12 @@ import { FeedScreen } from './src/screens/FeedScreen';
 import { ClassesScreen } from './src/screens/ClassesScreen';
 import { WishlistsScreen } from './src/screens/WishlistsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
-import { colors } from './src/theme';
+import { CreateClassroomScreen } from './src/teacher/CreateClassroomScreen';
+import { TeacherFeedScreen } from './src/teacher/TeacherFeedScreen';
+import { PhotoPickerSheet, PickedPhoto } from './src/teacher/PhotoPickerSheet';
+import { ComposeScreen } from './src/teacher/ComposeScreen';
+import { colors, avatarGradients } from './src/theme';
+import type { Post } from './src/data';
 
 const TAB_ORDER: TabKey[] = ['feed', 'classes', 'wishlists', 'profile'];
 
@@ -39,6 +44,13 @@ export default function App() {
   const [reportOpen, setReportOpen] = useState(false);
   const [feedFilter, setFeedFilter] = useState('all');
   const [role, setRole] = useState<Role>('parent');
+
+  // teacher first-run: create a classroom, then get nudged into a first post
+  const [classroomName, setClassroomName] = useState<string | null>(null);
+  const [teacherPosts, setTeacherPosts] = useState<Post[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [composePhoto, setComposePhoto] = useState<PickedPhoto | null>(null);
+  const [justPosted, setJustPosted] = useState(false);
 
   const changeTab = (next: TabKey) => {
     if (next === tab) return;
@@ -59,6 +71,32 @@ export default function App() {
     setFeedFilter('all');
     setReportOpen(false);
     setRole('parent');
+    setClassroomName(null);
+    setTeacherPosts([]);
+    setPickerOpen(false);
+    setComposePhoto(null);
+    setJustPosted(false);
+  };
+
+  // teacher picked a photo and wrote a caption: it lands on the feed
+  const sharePost = (caption: string) => {
+    if (!composePhoto || !classroomName) return;
+    const post: Post = {
+      id: `t${Date.now()}`,
+      initials: 'SC',
+      gradient: avatarGradients.peach,
+      name: 'Ms. Sarah Chen',
+      meta: classroomName,
+      time: 'Just now',
+      imageColor: composePhoto.tint,
+      image: composePhoto.image,
+      caption: caption || 'Our classroom today 🧡',
+      likes: 0,
+      liked: false,
+    };
+    setTeacherPosts((p) => [post, ...p]);
+    setComposePhoto(null);
+    setJustPosted(true);
   };
 
   // prototype nav: jump anywhere, any time (user control and freedom)
@@ -113,17 +151,51 @@ export default function App() {
         <DeviceFrame>
           {!onboarded ? (
             <OnboardingFlow onDone={() => setOnboarded(true)} />
+          ) : role === 'teacher' && !classroomName ? (
+            // teacher first-run: verified email, straight into naming the classroom
+            <>
+              <AppHeader role={role} onRolePress={() => {}} />
+              <View style={styles.screen}>
+                <CreateClassroomScreen onCreate={setClassroomName} />
+              </View>
+            </>
+          ) : composePhoto && classroomName ? (
+            // focused caption + share step, no tab bar to wander off to
+            <>
+              <AppHeader role={role} onRolePress={() => {}} />
+              <View style={styles.screen}>
+                <ComposeScreen
+                  photo={composePhoto}
+                  classroomName={classroomName}
+                  onBack={() => {
+                    setComposePhoto(null);
+                    setPickerOpen(true);
+                  }}
+                  onShare={sharePost}
+                />
+              </View>
+            </>
           ) : (
             <>
               <AppHeader role={role} onRolePress={() => changeTab('profile')} />
               <View style={styles.screen}>
-                <ScreenTransition transitionKey={tab} direction={direction}>
-                  {tab === 'feed' && (
-                    <FeedScreen
+                <ScreenTransition transitionKey={`${tab}-${role}`} direction={direction}>
+                  {tab === 'feed' && role === 'teacher' && classroomName ? (
+                    <TeacherFeedScreen
+                      classroomName={classroomName}
+                      posts={teacherPosts}
+                      justPosted={justPosted}
+                      onNewPost={() => setPickerOpen(true)}
                       onReport={() => setReportOpen(true)}
-                      filter={feedFilter}
-                      onFilterChange={setFeedFilter}
                     />
+                  ) : (
+                    tab === 'feed' && (
+                      <FeedScreen
+                        onReport={() => setReportOpen(true)}
+                        filter={feedFilter}
+                        onFilterChange={setFeedFilter}
+                      />
+                    )
                   )}
                   {tab === 'classes' && <ClassesScreen onOpenClass={openClass} />}
                   {tab === 'wishlists' && <WishlistsScreen />}
@@ -141,6 +213,15 @@ export default function App() {
               <BottomNav active={tab} onChange={changeTab} />
               {/* report sheet lives inside the device frame so it stays contained */}
               <ReportModal visible={reportOpen} onClose={() => setReportOpen(false)} />
+              {/* teacher photo picker springs up over the feed */}
+              <PhotoPickerSheet
+                visible={pickerOpen}
+                onClose={() => setPickerOpen(false)}
+                onPick={(photo) => {
+                  setPickerOpen(false);
+                  setComposePhoto(photo);
+                }}
+              />
             </>
           )}
         </DeviceFrame>
