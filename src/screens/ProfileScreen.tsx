@@ -5,11 +5,10 @@ import { RoleSwitcher, Role } from '../components/RoleSwitcher';
 import { ScreenTransition } from '../components/ScreenTransition';
 import { classes } from '../data';
 import { colors, font, shadowSoft } from '../theme';
-import { SectionLabel, Card, Row, Toast } from './profile/ui';
+import { SectionLabel, Card, Row, Toggle, Toast } from './profile/ui';
 import { PersonalInfoScreen } from './profile/PersonalInfoScreen';
 import { ClassroomsScreen } from './profile/ClassroomsScreen';
 import { JoinClassroomScreen } from './profile/JoinClassroomScreen';
-import { NotificationsScreen } from './profile/NotificationsScreen';
 import { PrivacySecurityScreen } from './profile/PrivacySecurityScreen';
 import { ChangePasswordScreen } from './profile/ChangePasswordScreen';
 import { HelpSupportScreen } from './profile/HelpSupportScreen';
@@ -21,7 +20,6 @@ type SubScreen =
   | 'personal'
   | 'classrooms'
   | 'join'
-  | 'notifications'
   | 'security'
   | 'password'
   | 'help'
@@ -46,6 +44,8 @@ export function ProfileScreen({
   const [screen, setScreen] = useState<SubScreen>('hub');
   const [direction, setDirection] = useState(1);
   const [signOutOpen, setSignOutOpen] = useState(false);
+  // first release keeps notifications to one switch; per-type prefs can come later
+  const [notificationsOn, setNotificationsOn] = useState(true);
   const [toast, setToast] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -140,16 +140,9 @@ export function ProfileScreen({
                 <SectionLabel>ACCOUNT</SectionLabel>
                 <Card>
                   <Row
-                    icon="person-outline"
-                    title="Personal info"
-                    sub="Name, photo, email, phone"
-                    onPress={() => go('personal')}
-                  />
-                  <Row
                     icon="notifications-outline"
-                    title="Notifications"
-                    sub="Posts, reminders, weekly digest"
-                    onPress={() => go('notifications')}
+                    title="Allow notifications"
+                    right={<Toggle value={notificationsOn} onChange={setNotificationsOn} />}
                   />
                   <Row
                     icon="lock-closed-outline"
@@ -199,7 +192,6 @@ export function ProfileScreen({
         {screen === 'join' && (
           <JoinClassroomScreen onBack={back} onJoined={backToClassrooms} notify={notify} />
         )}
-        {screen === 'notifications' && <NotificationsScreen onBack={back} />}
         {screen === 'security' && (
           <PrivacySecurityScreen
             onBack={back}

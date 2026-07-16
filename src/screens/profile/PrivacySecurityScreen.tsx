@@ -15,7 +15,6 @@ export function PrivacySecurityScreen({
   notify: (msg: string) => void;
 }) {
   const [photoOk, setPhotoOk] = useState(true);
-  const [nameVisible, setNameVisible] = useState(true);
 
   return (
     <View style={{ flex: 1 }}>
@@ -48,12 +47,6 @@ export function PrivacySecurityScreen({
               title="Photo permission"
               sub="Allow my kids in class photos"
               right={<Toggle value={photoOk} onChange={setPhotoOk} />}
-            />
-            <Row
-              icon="pricetag-outline"
-              title="Name visibility"
-              sub="Show first name to other parents"
-              right={<Toggle value={nameVisible} onChange={setNameVisible} />}
               last
             />
           </Card>
@@ -62,12 +55,6 @@ export function PrivacySecurityScreen({
         <View>
           <SectionLabel>YOUR DATA</SectionLabel>
           <Card>
-            <Row
-              icon="archive-outline"
-              title="Download my data"
-              sub="Photos, posts and account info"
-              onPress={() => notify('Would email an export within 24 hours')}
-            />
             <Row
               icon="document-text-outline"
               title="Privacy policy"
