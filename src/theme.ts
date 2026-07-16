@@ -34,6 +34,10 @@ export const colors = {
   caughtUpIconBg: '#fde8df',
   navInactive: '#a8a29e',
 
+  // settings toggles: green when ON (QA note: orange reads as a warning state,
+  // mirror Apple's system settings)
+  toggleOn: '#34c759',
+
   // neutral (report modal uses Untitled-UI greys)
   ink900: '#171717',
   ink700: '#404040',

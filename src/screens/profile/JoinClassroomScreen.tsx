@@ -1,0 +1,113 @@
+import React, { useRef, useState } from 'react';
+import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { colors, font } from '../../theme';
+import { noOutline } from '../../onboarding/ui';
+import { SubHeader, PrimaryButton, QuietButton } from './ui';
+
+const CODE_LEN = 6;
+
+// Join with a teacher-issued classroom code. QA-notes rules: the join button
+// stays disabled until the code is complete, there is no code-sharing prompt
+// anywhere (codes come from the teacher, one per family member), and the
+// no-code path asks the teacher instead of dead-ending.
+export function JoinClassroomScreen({
+  onBack,
+  onJoined,
+  notify,
+}: {
+  onBack: () => void;
+  onJoined: () => void;
+  notify: (msg: string) => void;
+}) {
+  const [code, setCode] = useState<string[]>(Array(CODE_LEN).fill(''));
+  const inputs = useRef<(TextInput | null)[]>([]);
+
+  const setAt = (i: number, v: string) => {
+    const ch = v.slice(-1).toUpperCase();
+    const next = [...code];
+    next[i] = ch;
+    setCode(next);
+    if (ch && i < CODE_LEN - 1) inputs.current[i + 1]?.focus();
+  };
+
+  const complete = code.every((c) => c.trim());
+
+  return (
+    <View style={{ flex: 1 }}>
+      <SubHeader title="Join a classroom" onBack={onBack} />
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+        <View style={styles.intro}>
+          <Text style={styles.emoji}>✉️</Text>
+          <Text style={styles.title}>Enter your classroom code</Text>
+          <Text style={styles.sub}>
+            Your teacher gives each family{'\n'}their own {CODE_LEN}-character code.
+          </Text>
+        </View>
+
+        <View style={styles.boxes}>
+          {code.map((c, i) => (
+            <TextInput
+              key={i}
+              ref={(r) => {
+                inputs.current[i] = r;
+              }}
+              value={c}
+              onChangeText={(v) => setAt(i, v)}
+              maxLength={1}
+              autoCapitalize="characters"
+              style={[styles.box, noOutline]}
+            />
+          ))}
+        </View>
+        <Text style={styles.hint}>Codes aren't case-sensitive.</Text>
+
+        <PrimaryButton
+          label="Join classroom"
+          disabled={!complete}
+          onPress={() => {
+            notify('Joined Bumblebee Room 🐝');
+            onJoined();
+          }}
+        />
+        <QuietButton
+          label="I don't have a code, ask my teacher"
+          onPress={() => notify('Drafts an email to your teacher asking for the code')}
+        />
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  body: { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
+  intro: { alignItems: 'center', gap: 6, marginTop: 10, marginBottom: 6 },
+  emoji: { fontSize: 40 },
+  title: { fontFamily: font.heading, fontSize: 18, color: colors.textDark },
+  sub: {
+    fontFamily: font.regular,
+    fontSize: 13.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  boxes: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 6 },
+  box: {
+    width: 44,
+    height: 54,
+    borderWidth: 1.5,
+    borderColor: colors.divider,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    textAlign: 'center',
+    fontFamily: font.heading,
+    fontSize: 20,
+    color: colors.textDark,
+  },
+  hint: {
+    fontFamily: font.regular,
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+});

@@ -1,106 +1,229 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from '../components/Avatar';
 import { RoleSwitcher, Role } from '../components/RoleSwitcher';
+import { ScreenTransition } from '../components/ScreenTransition';
+import { classes } from '../data';
 import { colors, font, shadowSoft } from '../theme';
+import { SectionLabel, Card, Row, Toast } from './profile/ui';
+import { PersonalInfoScreen } from './profile/PersonalInfoScreen';
+import { ClassroomsScreen } from './profile/ClassroomsScreen';
+import { JoinClassroomScreen } from './profile/JoinClassroomScreen';
+import { NotificationsScreen } from './profile/NotificationsScreen';
+import { PrivacySecurityScreen } from './profile/PrivacySecurityScreen';
+import { ChangePasswordScreen } from './profile/ChangePasswordScreen';
+import { HelpSupportScreen } from './profile/HelpSupportScreen';
+import { FeedbackScreen } from './profile/FeedbackScreen';
+import { SignOutSheet } from './profile/SignOutSheet';
 
-const ACCOUNT_ROWS = [
-  { icon: '👤', label: 'Personal info' },
-  { icon: '🔒', label: 'Privacy & security' },
-  { icon: '❓', label: 'Help & support' },
-  { icon: '⭐', label: 'Give Feedback' },
-];
+type SubScreen =
+  | 'hub'
+  | 'personal'
+  | 'classrooms'
+  | 'join'
+  | 'notifications'
+  | 'security'
+  | 'password'
+  | 'help'
+  | 'feedback';
 
+// Profile is a mini-stack: the hub plus one working screen behind every
+// action row. Same directional slide the tab bar uses.
 export function ProfileScreen({
   onSignOut,
   role,
   onRoleChange,
+  onOpenClass,
+  onReportPost,
 }: {
   onSignOut: () => void;
   role: Role;
   onRoleChange: (r: Role) => void;
+  onOpenClass?: (key: string) => void;
+  onReportPost?: () => void;
 }) {
-  const [notify, setNotify] = useState(true);
+  const stack = useRef<SubScreen[]>(['hub']);
+  const [screen, setScreen] = useState<SubScreen>('hub');
+  const [direction, setDirection] = useState(1);
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [toast, setToast] = useState('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const notify = (msg: string) => {
+    setToast(msg);
+    setToastVisible(true);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastVisible(false), 2200);
+  };
+
+  const go = (next: SubScreen) => {
+    stack.current.push(next);
+    setDirection(1);
+    setScreen(next);
+  };
+  const back = () => {
+    if (stack.current.length < 2) return;
+    stack.current.pop();
+    setDirection(-1);
+    setScreen(stack.current[stack.current.length - 1]);
+  };
+  // after joining, land on My classrooms rather than replaying the code entry
+  const backToClassrooms = () => {
+    stack.current = ['hub', 'classrooms'];
+    setDirection(-1);
+    setScreen('classrooms');
+  };
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.appBg }}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.greeting}>
-        <Text style={styles.hi}>Profile</Text>
-        <Text style={styles.sub}>Your account & preferences</Text>
-      </View>
+    <View style={{ flex: 1 }}>
+      <ScreenTransition transitionKey={screen} direction={direction}>
+        {screen === 'hub' && (
+          <ScrollView
+            style={{ backgroundColor: colors.appBg }}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.greeting}>
+              <Text style={styles.hi}>Profile</Text>
+              <Text style={styles.sub}>Your account & preferences</Text>
+            </View>
 
-      <View style={styles.body}>
-        {/* parent card */}
-        <View style={styles.parentCard}>
-          <Avatar initials="SC" solid={colors.primaryAlt} size={42} fontSize={16} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.parentName}>Sarah Chen</Text>
-            <Text style={styles.parentEmail}>sarah.chen@email.com</Text>
-          </View>
-          <View style={styles.editBtn}>
-            <Text style={styles.editTxt}>Edit</Text>
-          </View>
-        </View>
-
-        {/* role switch (parent / teacher) */}
-        <RoleSwitcher role={role} onChange={onRoleChange} />
-
-        {/* notifications */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>NOTIFICATIONS</Text>
-          <View style={styles.group}>
-            <View style={styles.settingRow}>
-              <View style={styles.settingLeft}>
-                <View style={styles.emojiBox}>
-                  <Text style={styles.emoji}>🔔</Text>
+            <View style={styles.body}>
+              {/* parent card: tapping the photo opens the picker, not a form */}
+              <View style={styles.parentCard}>
+                <View style={styles.parentTop}>
+                  <Pressable onPress={() => notify('Photo picker would open')}>
+                    <Avatar initials="SC" solid={colors.primaryAlt} size={46} fontSize={16} />
+                  </Pressable>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.parentName}>Sarah Chen</Text>
+                    <Text style={styles.parentEmail}>sarah.chen@email.com</Text>
+                  </View>
+                  <Pressable style={styles.editBtn} onPress={() => go('personal')}>
+                    <Text style={styles.editTxt}>Edit</Text>
+                  </Pressable>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.settingTitle}>New classroom moments</Text>
-                  <Text style={styles.settingSub}>Alert when teachers post</Text>
+                <View style={styles.chipRow}>
+                  {classes.map((c) => (
+                    <View key={c.id} style={styles.classChip}>
+                      <Avatar initials={c.initials} gradient={c.gradient} size={22} fontSize={9} />
+                      <Text style={styles.classChipTxt}>{c.meta.split(' · ')[0]}</Text>
+                    </View>
+                  ))}
                 </View>
               </View>
-              <Pressable onPress={() => setNotify((v) => !v)} style={[styles.toggle, notify ? styles.toggleOn : styles.toggleOff]}>
-                <View style={[styles.knob, notify ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }]} />
+
+              {/* one account can be both parent and teacher */}
+              <RoleSwitcher role={role} onChange={onRoleChange} />
+
+              <View style={styles.section}>
+                <SectionLabel>FAMILY</SectionLabel>
+                <Card>
+                  <Row
+                    icon="school-outline"
+                    title="My classrooms"
+                    sub={`${classes.length} joined at Lincoln Elementary`}
+                    onPress={() => go('classrooms')}
+                  />
+                  <Row
+                    icon="add-circle-outline"
+                    title="Join a classroom"
+                    sub="Enter a code from your teacher"
+                    onPress={() => go('join')}
+                    last
+                  />
+                </Card>
+              </View>
+
+              <View style={styles.section}>
+                <SectionLabel>ACCOUNT</SectionLabel>
+                <Card>
+                  <Row
+                    icon="person-outline"
+                    title="Personal info"
+                    sub="Name, photo, email, phone"
+                    onPress={() => go('personal')}
+                  />
+                  <Row
+                    icon="notifications-outline"
+                    title="Notifications"
+                    sub="Posts, reminders, weekly digest"
+                    onPress={() => go('notifications')}
+                  />
+                  <Row
+                    icon="lock-closed-outline"
+                    title="Privacy & security"
+                    sub="Password, photo permissions"
+                    onPress={() => go('security')}
+                    last
+                  />
+                </Card>
+              </View>
+
+              <View style={styles.section}>
+                <SectionLabel>SUPPORT</SectionLabel>
+                <Card>
+                  <Row
+                    icon="help-circle-outline"
+                    title="Help & support"
+                    sub="FAQs and contact us"
+                    onPress={() => go('help')}
+                  />
+                  <Row
+                    icon="star-outline"
+                    title="Give feedback"
+                    sub="Tell us how we're doing"
+                    onPress={() => go('feedback')}
+                    last
+                  />
+                </Card>
+              </View>
+
+              <Pressable style={styles.signOut} onPress={() => setSignOutOpen(true)}>
+                <Text style={styles.signOutTxt}>Sign Out</Text>
               </Pressable>
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        )}
 
-        {/* account */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>ACCOUNT</Text>
-          <View style={styles.group}>
-            {ACCOUNT_ROWS.map((r, i) => (
-              <View
-                key={r.label}
-                style={[
-                  styles.accountRow,
-                  i < ACCOUNT_ROWS.length - 1 && styles.accountRowBorder,
-                ]}
-              >
-                <View style={styles.settingLeft}>
-                  <View style={styles.emojiBox}>
-                    <Text style={styles.emoji}>{r.icon}</Text>
-                  </View>
-                  <Text style={styles.accountLabel}>{r.label}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted3} />
-              </View>
-            ))}
-          </View>
-        </View>
+        {screen === 'personal' && <PersonalInfoScreen onBack={back} notify={notify} />}
+        {screen === 'classrooms' && (
+          <ClassroomsScreen
+            onBack={back}
+            onJoin={() => go('join')}
+            onOpenClass={onOpenClass}
+            notify={notify}
+          />
+        )}
+        {screen === 'join' && (
+          <JoinClassroomScreen onBack={back} onJoined={backToClassrooms} notify={notify} />
+        )}
+        {screen === 'notifications' && <NotificationsScreen onBack={back} />}
+        {screen === 'security' && (
+          <PrivacySecurityScreen
+            onBack={back}
+            onChangePassword={() => go('password')}
+            notify={notify}
+          />
+        )}
+        {screen === 'password' && <ChangePasswordScreen onBack={back} notify={notify} />}
+        {screen === 'help' && (
+          <HelpSupportScreen onBack={back} onReportPost={onReportPost} notify={notify} />
+        )}
+        {screen === 'feedback' && <FeedbackScreen onBack={back} notify={notify} />}
+      </ScreenTransition>
 
-        {/* sign out */}
-        <Pressable style={styles.signOut} onPress={onSignOut}>
-          <Text style={styles.signOutTxt}>Sign Out</Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+      <SignOutSheet
+        visible={signOutOpen}
+        onClose={() => setSignOutOpen(false)}
+        onConfirm={() => {
+          setSignOutOpen(false);
+          onSignOut();
+        }}
+      />
+      <Toast message={toast} visible={toastVisible} />
+    </View>
   );
 }
 
@@ -112,14 +235,13 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: 16, paddingTop: 8, gap: 20 },
 
   parentCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
     backgroundColor: colors.white,
     borderRadius: 14,
     padding: 16,
+    gap: 13,
     ...shadowSoft,
   },
+  parentTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   parentName: { fontFamily: font.headingBold, fontSize: 20, color: colors.textDark2 },
   parentEmail: { fontFamily: font.regular, fontSize: 14, color: colors.textMuted },
   editBtn: {
@@ -131,51 +253,20 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   editTxt: { fontFamily: font.bold, fontSize: 14, color: colors.primaryAlt },
-
-  section: { gap: 10 },
-  sectionLabel: {
-    fontFamily: font.headingBold,
-    fontSize: 11,
-    color: colors.sectionLabel,
-    letterSpacing: 0.5,
-  },
-  group: {
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    padding: 16,
-    ...shadowSoft,
-  },
-  settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  settingLeft: { flexDirection: 'row', alignItems: 'center', gap: 11, flex: 1 },
-  emojiBox: {
-    width: 35,
-    height: 35,
-    borderRadius: 9,
-    backgroundColor: colors.settingsIconBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emoji: { fontSize: 16 },
-  settingTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.textDark2 },
-  settingSub: { fontFamily: font.regular, fontSize: 14, color: colors.textMuted, marginTop: 1 },
-
-  toggle: { width: 42, height: 25, borderRadius: 13, padding: 2, justifyContent: 'center' },
-  toggleOn: { backgroundColor: colors.primaryAlt },
-  toggleOff: { backgroundColor: colors.borderPrimary },
-  knob: { width: 21, height: 21, borderRadius: 11, backgroundColor: colors.white },
-
-  accountRow: {
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  classChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 6,
+    backgroundColor: colors.pillInactive,
+    borderRadius: 999,
+    paddingLeft: 4,
+    paddingRight: 11,
+    paddingVertical: 4,
   },
-  accountRowBorder: {
-    paddingBottom: 10,
-    marginBottom: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.cardDivider,
-  },
-  accountLabel: { fontFamily: font.semibold, fontSize: 14, color: colors.textDark2 },
+  classChipTxt: { fontFamily: font.bold, fontSize: 12, color: colors.textDark2 },
+
+  section: { gap: 0 },
 
   signOut: {
     borderWidth: 1,

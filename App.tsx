@@ -96,8 +96,14 @@ export default function App() {
                   {tab === 'classes' && <ClassesScreen onOpenClass={openClass} />}
                   {tab === 'wishlists' && <WishlistsScreen />}
                   {tab === 'profile' && (
-                <ProfileScreen onSignOut={signOut} role={role} onRoleChange={setRole} />
-              )}
+                    <ProfileScreen
+                      onSignOut={signOut}
+                      role={role}
+                      onRoleChange={setRole}
+                      onOpenClass={openClass}
+                      onReportPost={() => setReportOpen(true)}
+                    />
+                  )}
                 </ScreenTransition>
               </View>
               <BottomNav active={tab} onChange={changeTab} />
