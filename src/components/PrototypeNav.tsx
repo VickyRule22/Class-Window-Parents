@@ -2,10 +2,14 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TabKey } from './BottomNav';
-import { Role } from './RoleSwitcher';
 import { colors, font } from '../theme';
 
 export type NavLocation = 'signup' | TabKey;
+
+// Four persona entry points, each dropping you into a specific starting state:
+// the two "verified" ones land on a populated feed; the two "unverified" ones
+// land on the gate/first-run (parent join code, teacher create-classroom).
+export type Persona = 'parent' | 'parent-new' | 'teacher' | 'teacher-new';
 
 const SCREENS: { key: NavLocation; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'signup', label: 'Sign up', icon: 'sparkles-outline' },
@@ -15,20 +19,27 @@ const SCREENS: { key: NavLocation; label: string; icon: keyof typeof Ionicons.gl
   { key: 'profile', label: 'Profile', icon: 'person-outline' },
 ];
 
+const PERSONAS: { key: Persona; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'parent', label: 'Parent', icon: 'person' },
+  { key: 'parent-new', label: 'Unverified parent', icon: 'person-add-outline' },
+  { key: 'teacher', label: 'Teacher', icon: 'school' },
+  { key: 'teacher-new', label: 'Unverified teacher', icon: 'school-outline' },
+];
+
 // Always-visible prototype control bar, ported from the design-sandbox top nav.
 // Sits above every screen (onboarding included) so a reviewer is never trapped
 // in a flow: jump to any screen, switch persona, or reset to sign-up at will.
 // Deliberately styled as dark "chrome" so nobody mistakes it for product UI.
 export function PrototypeNav({
   location,
-  role,
+  persona,
   onJump,
-  onRole,
+  onPersona,
 }: {
   location: NavLocation;
-  role: Role;
+  persona: Persona | null;
   onJump: (dest: NavLocation) => void;
-  onRole: (r: Role) => void;
+  onPersona: (p: Persona) => void;
 }) {
   return (
     <View style={styles.bar}>
@@ -59,22 +70,20 @@ export function PrototypeNav({
 
         <View style={styles.divider} />
 
-        {(['parent', 'teacher'] as Role[]).map((r) => {
-          const active = role === r;
+        {PERSONAS.map((p) => {
+          const active = persona === p.key;
           return (
             <Pressable
-              key={r}
-              onPress={() => onRole(r)}
+              key={p.key}
+              onPress={() => onPersona(p.key)}
               style={[styles.pill, active && styles.pillRoleOn]}
             >
               <Ionicons
-                name={r === 'parent' ? 'person' : 'school'}
+                name={p.icon}
                 size={12}
                 color={active ? colors.textDark : '#c9a58e'}
               />
-              <Text style={[styles.pillTxt, active && styles.pillTxtRoleOn]}>
-                {r === 'parent' ? 'Parent' : 'Teacher'}
-              </Text>
+              <Text style={[styles.pillTxt, active && styles.pillTxtRoleOn]}>{p.label}</Text>
             </Pressable>
           );
         })}
