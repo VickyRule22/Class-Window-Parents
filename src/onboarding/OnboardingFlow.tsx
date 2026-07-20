@@ -30,7 +30,7 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={styles.root}>
-      <ScreenTransition transitionKey={step} direction={direction}>
+      <ScreenTransition transitionKey={step} direction={direction} variant="swap">
         {step === 'join' && (
           <InviteJoinScreen
             name={name}
