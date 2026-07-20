@@ -3,52 +3,22 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, font } from '../theme';
 
-// Every prototype destination, grouped by the role that sees it. Each one seeds
-// a complete starting state in App, so a reviewer can land directly on any
-// screen, including states you can normally only reach mid-flow.
-export type Dest =
-  | 'teacher-unverified'
-  | 'teacher-verified'
-  | 'teacher-empty'
-  | 'teacher-feed'
-  | 'teacher-post'
-  | 'teacher-compose'
-  | 'teacher-classrooms'
-  | 'teacher-profile'
-  | 'parent-signup'
-  | 'parent-new'
-  | 'parent-feed'
-  | 'parent-classes'
-  | 'parent-wishlists'
-  | 'parent-profile';
+// Three ways in, and that's it. Everyone signs up the same way, then you're
+// either in the teacher app or the parent app. Once inside, the phone's own
+// bottom nav gets you around, so this bar deliberately does NOT list every
+// screen: it's a way to enter the prototype, not a sitemap.
+export type Dest = 'signup' | 'teacher' | 'parent';
 
 type Item = { key: Dest; label: string; icon: keyof typeof Ionicons.glyphMap };
 
-const TEACHER: Item[] = [
-  // not yet confirmed by their school: nothing to do but contact the admin
-  { key: 'teacher-unverified', label: 'Unverified', icon: 'lock-closed-outline' },
-  // verified by the school, but hasn't named a classroom yet
-  { key: 'teacher-verified', label: 'Verified', icon: 'checkmark-circle-outline' },
-  { key: 'teacher-empty', label: 'Empty feed', icon: 'sparkles-outline' },
-  { key: 'teacher-feed', label: 'Feed', icon: 'home-outline' },
-  { key: 'teacher-post', label: 'New post', icon: 'camera-outline' },
-  { key: 'teacher-compose', label: 'Compose', icon: 'create-outline' },
-  { key: 'teacher-classrooms', label: 'Classrooms', icon: 'school-outline' },
-  { key: 'teacher-profile', label: 'Profile', icon: 'person-outline' },
+const ITEMS: Item[] = [
+  { key: 'signup', label: 'Sign up', icon: 'sparkles-outline' },
+  { key: 'teacher', label: 'Teacher', icon: 'school-outline' },
+  { key: 'parent', label: 'Parent', icon: 'people-outline' },
 ];
 
-const PARENT: Item[] = [
-  { key: 'parent-signup', label: 'Sign up', icon: 'sparkles-outline' },
-  { key: 'parent-new', label: 'Unverified', icon: 'lock-closed-outline' },
-  { key: 'parent-feed', label: 'Feed', icon: 'home-outline' },
-  { key: 'parent-classes', label: 'Classes', icon: 'school-outline' },
-  { key: 'parent-wishlists', label: 'Wishlists', icon: 'gift-outline' },
-  { key: 'parent-profile', label: 'Profile', icon: 'person-outline' },
-];
-
-// Always-visible prototype control bar, grouped Teacher then Parent so a
-// reviewer can see every screen each role has and jump straight to it.
-// Deliberately styled as dark "chrome" so nobody mistakes it for product UI.
+// Always-visible prototype control bar. Deliberately styled as dark "chrome" so
+// nobody mistakes it for product UI.
 export function PrototypeNav({
   dest,
   onGo,
@@ -56,21 +26,6 @@ export function PrototypeNav({
   dest: Dest | null;
   onGo: (d: Dest) => void;
 }) {
-  const pills = (items: Item[]) =>
-    items.map((it) => {
-      const active = dest === it.key;
-      return (
-        <Pressable
-          key={it.key}
-          onPress={() => onGo(it.key)}
-          style={[styles.pill, active && styles.pillOn]}
-        >
-          <Ionicons name={it.icon} size={12} color={active ? colors.white : '#c9a58e'} />
-          <Text style={[styles.pillTxt, active && styles.pillTxtOn]}>{it.label}</Text>
-        </Pressable>
-      );
-    });
-
   return (
     <View style={styles.bar}>
       <ScrollView
@@ -80,18 +35,24 @@ export function PrototypeNav({
       >
         <Text style={styles.tag}>PROTOTYPE</Text>
 
-        <Text style={[styles.group, styles.groupTeacher]}>TEACHER</Text>
-        {pills(TEACHER)}
-
-        <View style={styles.divider} />
-
-        <Text style={[styles.group, styles.groupParent]}>PARENT</Text>
-        {pills(PARENT)}
+        {ITEMS.map((it) => {
+          const active = dest === it.key;
+          return (
+            <Pressable
+              key={it.key}
+              onPress={() => onGo(it.key)}
+              style={[styles.pill, active && styles.pillOn]}
+            >
+              <Ionicons name={it.icon} size={13} color={active ? colors.white : '#c9a58e'} />
+              <Text style={[styles.pillTxt, active && styles.pillTxtOn]}>{it.label}</Text>
+            </Pressable>
+          );
+        })}
 
         <View style={styles.divider} />
 
         <View style={[styles.pill, styles.pillSoon]}>
-          <Ionicons name="briefcase-outline" size={12} color="#c9a58e" />
+          <Ionicons name="briefcase-outline" size={13} color="#c9a58e" />
           <Text style={styles.pillTxt}>Admin</Text>
           <View style={styles.soonPill}>
             <Text style={styles.soonTxt}>SOON</Text>
@@ -110,10 +71,9 @@ const styles = StyleSheet.create({
   rowContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    // centers the pills on wide viewports; still scrolls on narrow phones
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     flexGrow: 1,
     justifyContent: 'center',
   },
@@ -122,29 +82,20 @@ const styles = StyleSheet.create({
     fontSize: 9,
     letterSpacing: 1.2,
     color: '#a2887c',
-    marginRight: 4,
+    marginRight: 6,
   },
-  // role section headings, colour-coded so the two groups read apart at a glance
-  group: {
-    fontFamily: font.extrabold,
-    fontSize: 9,
-    letterSpacing: 1.2,
-    marginHorizontal: 2,
-  },
-  groupTeacher: { color: '#8fc9e8' },
-  groupParent: { color: '#f7a17a' },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
     borderRadius: 999,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   pillOn: { backgroundColor: colors.brandSolid },
   pillSoon: { opacity: 0.55 },
-  pillTxt: { fontFamily: font.bold, fontSize: 12, color: '#c9a58e' },
+  pillTxt: { fontFamily: font.bold, fontSize: 12.5, color: '#c9a58e' },
   pillTxtOn: { color: colors.white },
   divider: {
     width: 1,

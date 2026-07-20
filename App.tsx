@@ -27,6 +27,7 @@ import { FeedScreen } from './src/screens/FeedScreen';
 import { ParentJoinScreen } from './src/screens/ParentJoinScreen';
 import { ClassesScreen } from './src/screens/ClassesScreen';
 import { JoinClassroomScreen } from './src/screens/profile/JoinClassroomScreen';
+import { TeacherClassroomsScreen } from './src/screens/profile/TeacherClassroomsScreen';
 import { Toast } from './src/screens/profile/ui';
 import { WishlistsScreen } from './src/screens/WishlistsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
@@ -239,10 +240,9 @@ export default function App() {
     setJustPosted(true);
   };
 
-  // Prototype nav: every pill seeds a complete starting state, so a reviewer can
-  // land directly on any screen (including mid-flow states like the photo picker
-  // or the caption step). Dual role is only reachable in-app, by earning the
-  // second role from Profile.
+  // Prototype nav: three ways in. Sign up replays onboarding; the other two drop
+  // you into a working app as that role. Everything else is reached the way a
+  // real person would reach it, through the phone's own bottom nav.
   const goTo = (d: Dest) => {
     setDest(d);
     setReportOpen(false);
@@ -253,54 +253,33 @@ export default function App() {
     setJustPosted(false);
     setFeedFilter('all');
     setInviteDismissed(true);
+    setTab('feed');
 
-    // sign-up replays the onboarding flow, before any role exists
-    if (d === 'parent-signup') {
+    // sign-up is identical for everyone, and runs before any role exists
+    if (d === 'signup') {
       setOnboarded(false);
-      setTab('feed');
       setRole('parent');
       return;
     }
     setOnboarded(true);
 
-    const isTeacher = d.startsWith('teacher');
+    const isTeacher = d === 'teacher';
     setRole(isTeacher ? 'teacher' : 'parent');
     setHasTeacherRole(isTeacher);
     setHasParentRole(!isTeacher);
+    setTeacherVerified(true);
 
     if (isTeacher) {
       setParentJoined(false);
-      // only the unverified pill is waiting on the school
-      setTeacherVerified(d !== 'teacher-unverified');
-      if (d === 'teacher-unverified' || d === 'teacher-verified') {
-        // no classroom yet: unverified waits on the school, verified names one
-        setClassrooms([]);
-        setTeacherPosts([]);
-      } else {
-        setClassrooms([
-          { name: SEED_CLASSROOM, code: makeCode() },
-          { name: SEED_CLASSROOM_2, code: makeCode() },
-        ]);
-        // "empty feed" is the real pre-first-post state; everything else is populated
-        setTeacherPosts(d === 'teacher-empty' ? [] : seedTeacherPosts());
-      }
-      if (d === 'teacher-post') setPickerOpen(true);
-      if (d === 'teacher-compose') setComposePhoto(SEED_PHOTO);
-      setTab(d === 'teacher-classrooms' || d === 'teacher-profile' ? 'profile' : 'feed');
+      setClassrooms([
+        { name: SEED_CLASSROOM, code: makeCode() },
+        { name: SEED_CLASSROOM_2, code: makeCode() },
+      ]);
+      setTeacherPosts(seedTeacherPosts());
     } else {
       setClassrooms([]);
       setTeacherPosts([]);
-      // unverified parent sits at the join-code gate; everyone else has joined
-      setParentJoined(d !== 'parent-new');
-      setTab(
-        d === 'parent-classes'
-          ? 'classes'
-          : d === 'parent-wishlists'
-            ? 'wishlists'
-            : d === 'parent-profile'
-              ? 'profile'
-              : 'feed',
-      );
+      setParentJoined(true);
     }
   };
 
@@ -419,12 +398,22 @@ export default function App() {
                       />
                     )
                   )}
-                  {/* Classes is the family's list of their kids' teachers, so it
-                      is parent-only: a teacher has no business browsing other
-                      teachers' classrooms. */}
+                  {/* Same tab, role-aware content: a family sees their kids'
+                      teachers, a teacher sees the rooms they run. A teacher
+                      never gets the family list, so no one browses another
+                      teacher's classrooms. */}
                   {tab === 'classes' &&
-                    role === 'parent' &&
-                    (joiningClass ? (
+                    (role === 'teacher' ? (
+                      <TeacherClassroomsScreen
+                        classrooms={classrooms}
+                        onRotate={rotateCode}
+                        onAdd={() => {
+                          setCreatingClassroom(true);
+                          setTab('feed');
+                        }}
+                        notify={notify}
+                      />
+                    ) : joiningClass ? (
                       <JoinClassroomScreen
                         onBack={() => setJoiningClass(false)}
                         onJoined={() => setJoiningClass(false)}
@@ -439,9 +428,9 @@ export default function App() {
                   {tab === 'wishlists' && <WishlistsScreen />}
                   {tab === 'profile' && (
                     <ProfileScreen
-                      // re-key so a nav jump re-reads initialScreen
+                      // fresh stack whenever the prototype nav drops us into a
+                      // different app, so Profile never opens mid-sub-screen
                       key={dest ?? 'profile'}
-                      initialScreen={dest === 'teacher-classrooms' ? 'classrooms' : 'hub'}
                       onSignOut={signOut}
                       role={role}
                       roles={{ parent: hasParentRole, teacher: hasTeacherRole }}
@@ -463,17 +452,11 @@ export default function App() {
                   )}
                 </ScreenTransition>
               </View>
-              <BottomNav
-                active={tab}
-                onChange={changeTab}
-                // Classes is the family's list of other teachers; Wishlists is
-                // a placeholder. Dropping both leaves the centre free for the
-                // action a teacher is actually here to take.
-                hide={role === 'teacher' ? ['classes', 'wishlists'] : []}
-                centerGap={teacherCanPost}
-              />
-              {/* sharing a photo is the teacher's main action, so it gets a
-                  docked button lifted out of the bar instead of a row in it */}
+              {/* one bottom nav for everyone: Home, Classes, Wishlists, Profile.
+                  What each tab shows is role-aware, but the shape never moves. */}
+              <BottomNav active={tab} onChange={changeTab} />
+              {/* posting is teacher-only, so the button floats above the bar for
+                  them and simply isn't there for families */}
               {teacherCanPost && (
                 <PostFab
                   onPress={() => setPickerOpen(true)}

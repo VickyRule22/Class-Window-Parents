@@ -18,18 +18,22 @@ import { noOutline } from '../../onboarding/ui';
 // green active toggles, primary buttons that stay disabled until the form
 // is complete, and plain-spoken labels.
 
-export function SubHeader({ title, onBack }: { title: string; onBack: () => void }) {
+// onBack is optional so the same header serves a pushed sub-screen (with a back
+// chevron) and a top-level tab (without one, since there's nowhere to go back to).
+export function SubHeader({ title, onBack }: { title: string; onBack?: () => void }) {
   return (
     <View style={styles.subHead}>
-      <Pressable
-        hitSlop={8}
-        onPress={onBack}
-        style={styles.backBtn}
-        accessibilityRole="button"
-        accessibilityLabel="Back"
-      >
-        <Ionicons name="chevron-back" size={20} color={colors.primaryDeep} />
-      </Pressable>
+      {onBack && (
+        <Pressable
+          hitSlop={8}
+          onPress={onBack}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.primaryDeep} />
+        </Pressable>
+      )}
       <Text style={styles.subTitle}>{title}</Text>
     </View>
   );

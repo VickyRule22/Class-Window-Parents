@@ -69,25 +69,19 @@ function NavTab({
   );
 }
 
+// Same four tabs for everyone, teacher or parent. The content behind them is
+// role-aware, but the bar itself never changes shape, so switching roles doesn't
+// move the furniture.
 export function BottomNav({
   active,
   onChange,
-  hide = [],
-  centerGap = false,
 }: {
   active: TabKey;
   onChange: (t: TabKey) => void;
-  // tabs this role has no business seeing (teachers get no parent Classes list)
-  hide?: TabKey[];
-  // leave an empty slot in the middle for a docked action button
-  centerGap?: boolean;
 }) {
-  const visible = TABS.filter((t) => !hide.includes(t.key));
-  const mid = Math.ceil(visible.length / 2);
-
   return (
     <Animated.View style={styles.bar}>
-      {visible.slice(0, centerGap ? mid : undefined).map((t) => (
+      {TABS.map((t) => (
         <NavTab
           key={t.key}
           label={t.label}
@@ -96,17 +90,6 @@ export function BottomNav({
           onPress={() => onChange(t.key)}
         />
       ))}
-      {centerGap && <View style={styles.tab} />}
-      {centerGap &&
-        visible.slice(mid).map((t) => (
-          <NavTab
-            key={t.key}
-            label={t.label}
-            icon={t.icon}
-            active={t.key === active}
-            onPress={() => onChange(t.key)}
-          />
-        ))}
     </Animated.View>
   );
 }

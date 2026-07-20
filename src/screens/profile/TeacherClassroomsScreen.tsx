@@ -16,7 +16,8 @@ export function TeacherClassroomsScreen({
   notify,
 }: {
   classrooms: Classroom[];
-  onBack: () => void;
+  // absent when this renders as the Classes tab rather than a pushed screen
+  onBack?: () => void;
   onRotate: (index: number) => void;
   onAdd: () => void;
   notify: (msg: string) => void;

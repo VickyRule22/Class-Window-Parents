@@ -88,8 +88,9 @@ export function PostFab({
 const styles = StyleSheet.create({
   wrap: {
     position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
+    // clear of the tab bar, which every role now shares in full
+    bottom: 104,
+    right: 18,
     zIndex: 20,
     borderRadius: 999,
     // soft lift so it reads as floating above the bar
