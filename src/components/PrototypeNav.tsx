@@ -3,17 +3,22 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, font } from '../theme';
 
-// Three ways in, and that's it. Everyone signs up the same way, then you're
-// either in the teacher app or the parent app. Once inside, the phone's own
-// bottom nav gets you around, so this bar deliberately does NOT list every
-// screen: it's a way to enter the prototype, not a sitemap.
-export type Dest = 'signup' | 'teacher' | 'parent';
+// Ways in, and that's it. Everyone signs up the same way, then you're either
+// in the teacher app or the parent app. Once inside, the phone's own bottom
+// nav gets you around, so this bar deliberately does NOT list every screen:
+// it's a way to enter the prototype, not a sitemap.
+//
+// "Unverified" is the one exception. A teacher waiting on their school can't
+// be reached from any of the others, because every one of them lands you
+// already verified, so without its own pill that whole state is unreviewable.
+export type Dest = 'signup' | 'teacher' | 'unverified' | 'parent';
 
 type Item = { key: Dest; label: string; icon: keyof typeof Ionicons.glyphMap };
 
 const ITEMS: Item[] = [
   { key: 'signup', label: 'Sign up', icon: 'sparkles-outline' },
   { key: 'teacher', label: 'Teacher', icon: 'school-outline' },
+  { key: 'unverified', label: 'Unverified', icon: 'lock-closed-outline' },
   { key: 'parent', label: 'Parent', icon: 'people-outline' },
 ];
 

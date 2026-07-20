@@ -263,19 +263,25 @@ export default function App() {
     }
     setOnboarded(true);
 
-    const isTeacher = d === 'teacher';
+    const isTeacher = d === 'teacher' || d === 'unverified';
     setRole(isTeacher ? 'teacher' : 'parent');
     setHasTeacherRole(isTeacher);
     setHasParentRole(!isTeacher);
-    setTeacherVerified(true);
+    // the school hasn't confirmed this one yet, so they get the waiting screen
+    setTeacherVerified(d !== 'unverified');
 
     if (isTeacher) {
       setParentJoined(false);
-      setClassrooms([
-        { name: SEED_CLASSROOM, code: makeCode() },
-        { name: SEED_CLASSROOM_2, code: makeCode() },
-      ]);
-      setTeacherPosts(seedTeacherPosts());
+      // an unverified teacher can't create a classroom at all, so they have none
+      setClassrooms(
+        d === 'unverified'
+          ? []
+          : [
+              { name: SEED_CLASSROOM, code: makeCode() },
+              { name: SEED_CLASSROOM_2, code: makeCode() },
+            ],
+      );
+      setTeacherPosts(d === 'unverified' ? [] : seedTeacherPosts());
     } else {
       setClassrooms([]);
       setTeacherPosts([]);
