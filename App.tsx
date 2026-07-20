@@ -38,8 +38,8 @@ import type { Post } from './src/data';
 export type Classroom = { name: string; code: string };
 
 // Join codes are three random words: harder to guess than 6 characters and
-// easier to type. Forwarding is handled socially (teacher approves every join,
-// and can rotate the code), not by making the code cryptic.
+// easier to type. The code alone gets a family in; if one gets passed around,
+// the teacher rotates it and the old one stops working.
 const CODE_WORDS = [
   'maple', 'otter', 'sunny', 'river', 'tiger', 'lemon',
   'cloud', 'panda', 'berry', 'frost', 'wagon', 'daisy',
@@ -116,7 +116,6 @@ export default function App() {
   // Teachers can run several classrooms; each carries its own join code.
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [creatingClassroom, setCreatingClassroom] = useState(false);
-  const [joinRequest, setJoinRequest] = useState<'pending' | 'handled'>('pending');
   const [teacherPosts, setTeacherPosts] = useState<Post[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [composePhoto, setComposePhoto] = useState<PickedPhoto | null>(null);
@@ -148,7 +147,6 @@ export default function App() {
     setInviteDismissed(false);
     setClassrooms([]);
     setCreatingClassroom(false);
-    setJoinRequest('pending');
     setTeacherPosts([]);
     setPickerOpen(false);
     setComposePhoto(null);
@@ -235,7 +233,6 @@ export default function App() {
         setClassrooms([{ name: SEED_CLASSROOM, code: makeCode() }]);
         // "empty feed" is the real pre-first-post state; everything else is populated
         setTeacherPosts(d === 'teacher-empty' ? [] : seedTeacherPosts());
-        setJoinRequest(d === 'teacher-feed' ? 'pending' : 'handled');
       }
       if (d === 'teacher-post') setPickerOpen(true);
       if (d === 'teacher-compose') setComposePhoto(SEED_PHOTO);
@@ -334,8 +331,6 @@ export default function App() {
                       classrooms={classrooms.map((c) => c.name)}
                       posts={teacherPosts}
                       justPosted={justPosted}
-                      joinRequest={joinRequest === 'pending'}
-                      onJoinHandled={() => setJoinRequest('handled')}
                       onNewPost={() => setPickerOpen(true)}
                       onReport={() => setReportOpen(true)}
                       onTrashPost={(id) =>

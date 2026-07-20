@@ -79,8 +79,8 @@ export function CreateClassroomScreen({
         <Text style={styles.ctaTxt}>Create my classroom</Text>
       </Pressable>
       <Text style={styles.foot}>
-        Each classroom gets its own three-word join code. You approve every family that
-        uses it.
+        Each classroom gets its own three-word join code. Share it with your families,
+        and rotate it anytime.
       </Text>
     </ScrollView>
   );

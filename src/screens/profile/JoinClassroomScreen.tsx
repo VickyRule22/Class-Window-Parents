@@ -9,8 +9,8 @@ const WORD_HINTS = ['maple', 'otter', 'sunny'];
 // Join with a teacher-issued three-word code. QA-notes rules: the join button
 // stays disabled until the code is complete, there is no code-sharing prompt
 // anywhere (codes come from the teacher, one per family member), and the
-// no-code path asks the teacher instead of dead-ending. Joins are
-// teacher-approved, so a forwarded code alone gets nobody in.
+// no-code path asks the teacher instead of dead-ending. The code alone gets a
+// family in; teachers rotate it if one gets passed around.
 export function JoinClassroomScreen({
   onBack,
   onJoined,
@@ -60,7 +60,7 @@ export function JoinClassroomScreen({
             />
           ))}
         </View>
-        <Text style={styles.hint}>Your teacher approves the join, so it may take a moment.</Text>
+        <Text style={styles.hint}>Enter the three words from your teacher's welcome note.</Text>
 
         <PrimaryButton
           label="Join classroom"

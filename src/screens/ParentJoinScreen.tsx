@@ -10,7 +10,7 @@ const WORD_HINTS = ['maple', 'otter', 'sunny'];
 
 // A brand-new parent's home: no classroom yet, so the feed IS the join step.
 // Type the teacher's code or scan the QR from the welcome note; either one
-// sends a join request for the teacher to approve.
+// drops them straight into the classroom feed.
 export function ParentJoinScreen({ onJoined }: { onJoined: () => void }) {
   const [words, setWords] = useState<string[]>(['', '', '']);
   const inputs = useRef<(TextInput | null)[]>([]);

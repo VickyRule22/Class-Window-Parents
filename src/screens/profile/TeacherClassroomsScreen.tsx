@@ -6,8 +6,8 @@ import { SubHeader, PrimaryButton, PillNote } from './ui';
 import type { Classroom } from '../../../App';
 
 // A teacher's classroom manager: every room they run, each with its
-// three-word join code. Codes can be forwarded, so joins are teacher-approved
-// and any code can be rotated on the spot (old one dies instantly).
+// three-word join code. The code alone gets a family in; if one gets passed
+// around, any code can be rotated on the spot (old one dies instantly).
 export function TeacherClassroomsScreen({
   classrooms,
   onBack,
@@ -33,7 +33,7 @@ export function TeacherClassroomsScreen({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{c.name}</Text>
-                <Text style={styles.meta}>You approve every family that joins</Text>
+                <Text style={styles.meta}>Families join with this code</Text>
               </View>
             </View>
             <View style={styles.codeRow}>
@@ -56,8 +56,8 @@ export function TeacherClassroomsScreen({
         ))}
 
         <PillNote icon="🔒">
-          Anyone with the code still needs your approval to get in. Rotate it anytime and
-          the old code stops working; families already in stay in.
+          Anyone with the code can join. Rotate it anytime and the old code stops
+          working; families already in stay in.
         </PillNote>
 
         <PrimaryButton label="Add another classroom" onPress={onAdd} />
