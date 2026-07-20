@@ -1,11 +1,18 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ClassCard } from '../components/ClassCard';
 import { classes } from '../data';
 import { colors, font, shadowSoft } from '../theme';
 
-export function ClassesScreen({ onOpenClass }: { onOpenClass: (key: string) => void }) {
+export function ClassesScreen({
+  onOpenClass,
+  onAddClass,
+}: {
+  onOpenClass: (key: string) => void;
+  // opens the same join-by-code screen a brand-new parent gets
+  onAddClass: () => void;
+}) {
   return (
     <ScrollView
       style={{ backgroundColor: colors.appBg }}
@@ -26,7 +33,12 @@ export function ClassesScreen({ onOpenClass }: { onOpenClass: (key: string) => v
         </View>
 
         {/* add another class (dashed) */}
-        <View style={styles.addCard}>
+        <Pressable
+          style={styles.addCard}
+          onPress={onAddClass}
+          accessibilityRole="button"
+          accessibilityLabel="Add another class"
+        >
           <View style={styles.plusBtn}>
             <Ionicons name="add" size={16} color={colors.textMuted2} />
           </View>
@@ -34,7 +46,7 @@ export function ClassesScreen({ onOpenClass }: { onOpenClass: (key: string) => v
             <Text style={styles.addTitle}>Add another class</Text>
             <Text style={styles.addSub}>Join with a class code from your teacher</Text>
           </View>
-        </View>
+        </Pressable>
       </View>
     </ScrollView>
   );

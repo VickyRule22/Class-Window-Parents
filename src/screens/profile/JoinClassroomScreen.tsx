@@ -1,16 +1,15 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { colors, font } from '../../theme';
-import { noOutline } from '../../onboarding/ui';
+import { ClassCodeEntry } from '../../components/ClassCodeEntry';
 import { SubHeader, PrimaryButton, QuietButton } from './ui';
 
-const WORD_HINTS = ['maple', 'otter', 'sunny'];
-
-// Join with a teacher-issued three-word code. QA-notes rules: the join button
-// stays disabled until the code is complete, there is no code-sharing prompt
-// anywhere (codes come from the teacher, one per family member), and the
-// no-code path asks the teacher instead of dead-ending. The code alone gets a
-// family in; teachers rotate it if one gets passed around.
+// Join with a teacher-issued three-word code. Shares ClassCodeEntry with the
+// brand-new-parent screen so both follow the same rules: the join button stays
+// disabled until the code is complete, there is no code-sharing prompt anywhere
+// (codes come from the teacher), and the no-code path asks the teacher instead
+// of dead-ending. The code alone gets a family in; teachers rotate it if one
+// gets passed around.
 export function JoinClassroomScreen({
   onBack,
   onJoined,
@@ -21,14 +20,6 @@ export function JoinClassroomScreen({
   notify: (msg: string) => void;
 }) {
   const [words, setWords] = useState<string[]>(['', '', '']);
-  const inputs = useRef<(TextInput | null)[]>([]);
-
-  const setAt = (i: number, v: string) => {
-    const next = [...words];
-    next[i] = v.toLowerCase().replace(/[^a-z]/g, '');
-    setWords(next);
-  };
-
   const complete = words.every((w) => w.trim());
 
   return (
@@ -39,28 +30,11 @@ export function JoinClassroomScreen({
           <Text style={styles.emoji}>✉️</Text>
           <Text style={styles.title}>Enter your classroom code</Text>
           <Text style={styles.sub}>
-            Your teacher gives each family a code{'\n'}made of three little words.
+            Ask your child's teacher for the{'\n'}three-word code to their classroom.
           </Text>
         </View>
 
-        <View style={styles.boxes}>
-          {words.map((w, i) => (
-            <TextInput
-              key={i}
-              ref={(r) => {
-                inputs.current[i] = r;
-              }}
-              value={w}
-              onChangeText={(v) => setAt(i, v)}
-              placeholder={WORD_HINTS[i]}
-              placeholderTextColor={colors.textMuted3}
-              autoCapitalize="none"
-              onSubmitEditing={() => inputs.current[i + 1]?.focus()}
-              style={[styles.box, noOutline]}
-            />
-          ))}
-        </View>
-        <Text style={styles.hint}>Enter the three words from your teacher's welcome note.</Text>
+        <ClassCodeEntry words={words} onChange={setWords} />
 
         <PrimaryButton
           label="Join classroom"
@@ -90,25 +64,5 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
-  },
-  boxes: { flexDirection: 'row', gap: 8, marginTop: 6 },
-  box: {
-    flex: 1,
-    height: 50,
-    borderWidth: 1.5,
-    borderColor: colors.divider,
-    borderRadius: 12,
-    backgroundColor: colors.white,
-    textAlign: 'center',
-    fontFamily: font.heading,
-    fontSize: 16,
-    color: colors.textDark,
-  },
-  hint: {
-    fontFamily: font.regular,
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: 8,
   },
 });

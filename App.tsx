@@ -26,6 +26,8 @@ import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { FeedScreen } from './src/screens/FeedScreen';
 import { ParentJoinScreen } from './src/screens/ParentJoinScreen';
 import { ClassesScreen } from './src/screens/ClassesScreen';
+import { JoinClassroomScreen } from './src/screens/profile/JoinClassroomScreen';
+import { Toast } from './src/screens/profile/ui';
 import { WishlistsScreen } from './src/screens/WishlistsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { CreateClassroomScreen } from './src/teacher/CreateClassroomScreen';
@@ -116,6 +118,11 @@ export default function App() {
   // Teachers can run several classrooms; each carries its own join code.
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [creatingClassroom, setCreatingClassroom] = useState(false);
+  // a joined parent adding one more class: same join-by-code screen, pushed
+  // over the Classes list
+  const [joiningClass, setJoiningClass] = useState(false);
+  const [toast, setToast] = useState('');
+  const [toastVisible, setToastVisible] = useState(false);
   const [teacherPosts, setTeacherPosts] = useState<Post[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [composePhoto, setComposePhoto] = useState<PickedPhoto | null>(null);
@@ -133,6 +140,13 @@ export default function App() {
     changeTab('feed');
   };
 
+  // brief confirmation toast, shared with the pushed join-a-class screen
+  const notify = (msg: string) => {
+    setToast(msg);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2200);
+  };
+
   // sign out returns to the sign-in flow and resets app state for next login
   const signOut = () => {
     setOnboarded(false);
@@ -147,6 +161,7 @@ export default function App() {
     setInviteDismissed(false);
     setClassrooms([]);
     setCreatingClassroom(false);
+    setJoiningClass(false);
     setTeacherPosts([]);
     setPickerOpen(false);
     setComposePhoto(null);
@@ -205,6 +220,7 @@ export default function App() {
     setPickerOpen(false);
     setComposePhoto(null);
     setCreatingClassroom(false);
+    setJoiningClass(false);
     setJustPosted(false);
     setFeedFilter('all');
     setInviteDismissed(true);
@@ -361,9 +377,20 @@ export default function App() {
                   {/* Classes is the family's list of their kids' teachers, so it
                       is parent-only: a teacher has no business browsing other
                       teachers' classrooms. */}
-                  {tab === 'classes' && role === 'parent' && (
-                    <ClassesScreen onOpenClass={openClass} />
-                  )}
+                  {tab === 'classes' &&
+                    role === 'parent' &&
+                    (joiningClass ? (
+                      <JoinClassroomScreen
+                        onBack={() => setJoiningClass(false)}
+                        onJoined={() => setJoiningClass(false)}
+                        notify={notify}
+                      />
+                    ) : (
+                      <ClassesScreen
+                        onOpenClass={openClass}
+                        onAddClass={() => setJoiningClass(true)}
+                      />
+                    ))}
                   {tab === 'wishlists' && <WishlistsScreen />}
                   {tab === 'profile' && (
                     <ProfileScreen
@@ -398,6 +425,7 @@ export default function App() {
               />
               {/* report sheet lives inside the device frame so it stays contained */}
               <ReportModal visible={reportOpen} onClose={() => setReportOpen(false)} />
+              <Toast message={toast} visible={toastVisible} />
               {/* teacher photo picker springs up over the feed */}
               <PhotoPickerSheet
                 visible={pickerOpen}
