@@ -18,7 +18,7 @@ import {
 import { AppHeader } from './src/components/AppHeader';
 import { DeviceFrame } from './src/components/DeviceFrame';
 import { BottomNav, TabKey } from './src/components/BottomNav';
-import { PrototypeNav, NavLocation, Persona } from './src/components/PrototypeNav';
+import { PrototypeNav, Dest } from './src/components/PrototypeNav';
 import { Role } from './src/components/RoleSwitcher';
 import { ScreenTransition } from './src/components/ScreenTransition';
 import { ReportModal } from './src/components/ReportModal';
@@ -52,6 +52,11 @@ const TAB_ORDER: TabKey[] = ['feed', 'classes', 'wishlists', 'profile'];
 // A ready-made classroom + a couple of posts, so the "verified teacher" persona
 // pill lands straight on a populated teacher feed instead of the first-run.
 const SEED_CLASSROOM = "Ms. Chen's 2nd Grade Science";
+// pre-picked photo so the Compose (caption) step is reachable in one jump
+const SEED_PHOTO: PickedPhoto = {
+  image: require('./assets/figma/posts/sunflowers.png'),
+  tint: colors.postBlue,
+};
 const seedTeacherPosts = (): Post[] => [
   {
     id: 'seed-1',
@@ -97,9 +102,9 @@ export default function App() {
   const [hasParentRole, setHasParentRole] = useState(false);
   const [hasTeacherRole, setHasTeacherRole] = useState(false);
   const dualRole = hasParentRole && hasTeacherRole;
-  // which prototype-nav persona pill is active (highlights the pill; null on the
-  // sign-up screen). The pill also seeds the matching starting state.
-  const [persona, setPersona] = useState<Persona | null>(null);
+  // which prototype-nav destination is active (highlights the pill). Each one
+  // seeds the full starting state for that screen.
+  const [dest, setDest] = useState<Dest | null>(null);
   // a fresh parent has no classroom yet: their feed is the join step
   // (enter the teacher's code or scan the QR from the welcome note)
   const [parentJoined, setParentJoined] = useState(false);
@@ -135,7 +140,7 @@ export default function App() {
     setTab('feed');
     setFeedFilter('all');
     setReportOpen(false);
-    setPersona(null);
+    setDest(null);
     setRole('parent');
     setHasParentRole(false);
     setHasTeacherRole(false);
@@ -192,63 +197,63 @@ export default function App() {
     setJustPosted(true);
   };
 
-  // prototype nav: jump anywhere, any time (user control and freedom). Which
-  // feed you land on (populated vs the join gate / first-run) is decided by the
-  // persona pills, not here, so a plain screen jump never changes that state.
-  const jumpTo = (dest: NavLocation) => {
-    if (dest === 'signup') {
-      setOnboarded(false);
-      setTab('feed');
-      setReportOpen(false);
-      setPersona(null);
-      return;
-    }
-    if (!onboarded) {
-      setOnboarded(true);
-      setTab(dest);
-      return;
-    }
-    changeTab(dest);
-  };
-
-  // Persona pills simulate GETTING IN as a specific starting state:
-  //  - parent:       a joined family, straight to the populated feed
-  //  - parent-new:   a brand-new parent, at the join-code gate (unverified)
-  //  - teacher:      a set-up teacher, on a populated classroom feed
-  //  - teacher-new:  a brand-new teacher, at the create-classroom first-run
-  // Dual role is only reachable in-app, by earning the second role from Profile.
-  const selectPersona = (p: Persona) => {
-    setPersona(p);
-    setOnboarded(true);
-    setTab('feed');
-    setFeedFilter('all');
+  // Prototype nav: every pill seeds a complete starting state, so a reviewer can
+  // land directly on any screen (including mid-flow states like the photo picker
+  // or the caption step). Dual role is only reachable in-app, by earning the
+  // second role from Profile.
+  const goTo = (d: Dest) => {
+    setDest(d);
     setReportOpen(false);
     setPickerOpen(false);
     setComposePhoto(null);
     setCreatingClassroom(false);
     setJustPosted(false);
+    setFeedFilter('all');
     setInviteDismissed(true);
 
-    const isTeacher = p === 'teacher' || p === 'teacher-new';
+    // sign-up replays the onboarding flow, before any role exists
+    if (d === 'parent-signup') {
+      setOnboarded(false);
+      setTab('feed');
+      setRole('parent');
+      return;
+    }
+    setOnboarded(true);
+
+    const isTeacher = d.startsWith('teacher');
     setRole(isTeacher ? 'teacher' : 'parent');
-    setHasParentRole(!isTeacher);
     setHasTeacherRole(isTeacher);
+    setHasParentRole(!isTeacher);
 
     if (isTeacher) {
       setParentJoined(false);
-      if (p === 'teacher') {
-        setClassrooms([{ name: SEED_CLASSROOM, code: makeCode() }]);
-        setTeacherPosts(seedTeacherPosts());
-        setJoinRequest('pending');
-      } else {
+      if (d === 'teacher-new') {
+        // brand-new teacher: no classroom yet, so the first-run takes over
         setClassrooms([]);
         setTeacherPosts([]);
+      } else {
+        setClassrooms([{ name: SEED_CLASSROOM, code: makeCode() }]);
+        // "empty feed" is the real pre-first-post state; everything else is populated
+        setTeacherPosts(d === 'teacher-empty' ? [] : seedTeacherPosts());
+        setJoinRequest(d === 'teacher-feed' ? 'pending' : 'handled');
       }
+      if (d === 'teacher-post') setPickerOpen(true);
+      if (d === 'teacher-compose') setComposePhoto(SEED_PHOTO);
+      setTab(d === 'teacher-classrooms' || d === 'teacher-profile' ? 'profile' : 'feed');
     } else {
       setClassrooms([]);
       setTeacherPosts([]);
-      // verified parent = joined feed; unverified = the join-code gate
-      setParentJoined(p === 'parent');
+      // unverified parent sits at the join-code gate; everyone else has joined
+      setParentJoined(d !== 'parent-new');
+      setTab(
+        d === 'parent-classes'
+          ? 'classes'
+          : d === 'parent-wishlists'
+            ? 'wishlists'
+            : d === 'parent-profile'
+              ? 'profile'
+              : 'feed',
+      );
     }
   };
 
@@ -273,10 +278,8 @@ export default function App() {
         {/* reviewer chrome: lives on the viewport, above the phone mockup,
             because it's a prototype control, not part of the app */}
         <PrototypeNav
-          location={!onboarded ? 'signup' : tab}
-          persona={persona}
-          onJump={jumpTo}
-          onPersona={selectPersona}
+          dest={dest}
+          onGo={goTo}
         />
         <DeviceFrame>
           {!onboarded ? (
@@ -364,6 +367,9 @@ export default function App() {
                   {tab === 'wishlists' && <WishlistsScreen />}
                   {tab === 'profile' && (
                     <ProfileScreen
+                      // re-key so a nav jump re-reads initialScreen
+                      key={dest ?? 'profile'}
+                      initialScreen={dest === 'teacher-classrooms' ? 'classrooms' : 'hub'}
                       onSignOut={signOut}
                       role={role}
                       roles={{ parent: hasParentRole, teacher: hasTeacherRole }}

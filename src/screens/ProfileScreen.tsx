@@ -41,6 +41,7 @@ export function ProfileScreen({
   onAddClassroom,
   onOpenClass,
   onReportPost,
+  initialScreen = 'hub',
 }: {
   onSignOut: () => void;
   role: Role;
@@ -55,11 +56,14 @@ export function ProfileScreen({
   onAddClassroom?: () => void;
   onOpenClass?: (key: string) => void;
   onReportPost?: () => void;
+  // lets the prototype nav deep-link straight to a sub-screen (the component is
+  // re-keyed on jump, so this is read once on mount)
+  initialScreen?: SubScreen;
 }) {
   const dualRole = roles.parent && roles.teacher;
   const teacherView = role === 'teacher' && (teacherClassrooms?.length ?? 0) > 0;
-  const stack = useRef<SubScreen[]>(['hub']);
-  const [screen, setScreen] = useState<SubScreen>('hub');
+  const stack = useRef<SubScreen[]>([initialScreen]);
+  const [screen, setScreen] = useState<SubScreen>(initialScreen);
   const [direction, setDirection] = useState(1);
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [toast, setToast] = useState('');

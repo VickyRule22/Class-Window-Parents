@@ -1,46 +1,72 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { TabKey } from './BottomNav';
 import { colors, font } from '../theme';
 
-export type NavLocation = 'signup' | TabKey;
+// Every prototype destination, grouped by the role that sees it. Each one seeds
+// a complete starting state in App, so a reviewer can land directly on any
+// screen, including states you can normally only reach mid-flow.
+export type Dest =
+  | 'teacher-new'
+  | 'teacher-empty'
+  | 'teacher-feed'
+  | 'teacher-post'
+  | 'teacher-compose'
+  | 'teacher-classrooms'
+  | 'teacher-profile'
+  | 'parent-signup'
+  | 'parent-new'
+  | 'parent-feed'
+  | 'parent-classes'
+  | 'parent-wishlists'
+  | 'parent-profile';
 
-// Four persona entry points, each dropping you into a specific starting state:
-// the two "verified" ones land on a populated feed; the two "unverified" ones
-// land on the gate/first-run (parent join code, teacher create-classroom).
-export type Persona = 'parent' | 'parent-new' | 'teacher' | 'teacher-new';
+type Item = { key: Dest; label: string; icon: keyof typeof Ionicons.glyphMap };
 
-const SCREENS: { key: NavLocation; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'signup', label: 'Sign up', icon: 'sparkles-outline' },
-  { key: 'feed', label: 'Feed', icon: 'home-outline' },
-  { key: 'classes', label: 'Classes', icon: 'school-outline' },
-  { key: 'wishlists', label: 'Wishlists', icon: 'gift-outline' },
-  { key: 'profile', label: 'Profile', icon: 'person-outline' },
+const TEACHER: Item[] = [
+  { key: 'teacher-new', label: 'Unverified', icon: 'lock-closed-outline' },
+  { key: 'teacher-empty', label: 'Empty feed', icon: 'sparkles-outline' },
+  { key: 'teacher-feed', label: 'Feed', icon: 'home-outline' },
+  { key: 'teacher-post', label: 'New post', icon: 'camera-outline' },
+  { key: 'teacher-compose', label: 'Compose', icon: 'create-outline' },
+  { key: 'teacher-classrooms', label: 'Classrooms', icon: 'school-outline' },
+  { key: 'teacher-profile', label: 'Profile', icon: 'person-outline' },
 ];
 
-const PERSONAS: { key: Persona; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'parent', label: 'Parent', icon: 'person' },
-  { key: 'parent-new', label: 'Unverified parent', icon: 'person-add-outline' },
-  { key: 'teacher', label: 'Teacher', icon: 'school' },
-  { key: 'teacher-new', label: 'Unverified teacher', icon: 'school-outline' },
+const PARENT: Item[] = [
+  { key: 'parent-signup', label: 'Sign up', icon: 'sparkles-outline' },
+  { key: 'parent-new', label: 'Unverified', icon: 'lock-closed-outline' },
+  { key: 'parent-feed', label: 'Feed', icon: 'home-outline' },
+  { key: 'parent-classes', label: 'Classes', icon: 'school-outline' },
+  { key: 'parent-wishlists', label: 'Wishlists', icon: 'gift-outline' },
+  { key: 'parent-profile', label: 'Profile', icon: 'person-outline' },
 ];
 
-// Always-visible prototype control bar, ported from the design-sandbox top nav.
-// Sits above every screen (onboarding included) so a reviewer is never trapped
-// in a flow: jump to any screen, switch persona, or reset to sign-up at will.
+// Always-visible prototype control bar, grouped Teacher then Parent so a
+// reviewer can see every screen each role has and jump straight to it.
 // Deliberately styled as dark "chrome" so nobody mistakes it for product UI.
 export function PrototypeNav({
-  location,
-  persona,
-  onJump,
-  onPersona,
+  dest,
+  onGo,
 }: {
-  location: NavLocation;
-  persona: Persona | null;
-  onJump: (dest: NavLocation) => void;
-  onPersona: (p: Persona) => void;
+  dest: Dest | null;
+  onGo: (d: Dest) => void;
 }) {
+  const pills = (items: Item[]) =>
+    items.map((it) => {
+      const active = dest === it.key;
+      return (
+        <Pressable
+          key={it.key}
+          onPress={() => onGo(it.key)}
+          style={[styles.pill, active && styles.pillOn]}
+        >
+          <Ionicons name={it.icon} size={12} color={active ? colors.white : '#c9a58e'} />
+          <Text style={[styles.pillTxt, active && styles.pillTxtOn]}>{it.label}</Text>
+        </Pressable>
+      );
+    });
+
   return (
     <View style={styles.bar}>
       <ScrollView
@@ -50,43 +76,15 @@ export function PrototypeNav({
       >
         <Text style={styles.tag}>PROTOTYPE</Text>
 
-        {SCREENS.map((s) => {
-          const active = location === s.key;
-          return (
-            <Pressable
-              key={s.key}
-              onPress={() => onJump(s.key)}
-              style={[styles.pill, active && styles.pillOn]}
-            >
-              <Ionicons
-                name={s.icon}
-                size={12}
-                color={active ? colors.white : '#c9a58e'}
-              />
-              <Text style={[styles.pillTxt, active && styles.pillTxtOn]}>{s.label}</Text>
-            </Pressable>
-          );
-        })}
+        <Text style={[styles.group, styles.groupTeacher]}>TEACHER</Text>
+        {pills(TEACHER)}
 
         <View style={styles.divider} />
 
-        {PERSONAS.map((p) => {
-          const active = persona === p.key;
-          return (
-            <Pressable
-              key={p.key}
-              onPress={() => onPersona(p.key)}
-              style={[styles.pill, active && styles.pillRoleOn]}
-            >
-              <Ionicons
-                name={p.icon}
-                size={12}
-                color={active ? colors.textDark : '#c9a58e'}
-              />
-              <Text style={[styles.pillTxt, active && styles.pillTxtRoleOn]}>{p.label}</Text>
-            </Pressable>
-          );
-        })}
+        <Text style={[styles.group, styles.groupParent]}>PARENT</Text>
+        {pills(PARENT)}
+
+        <View style={styles.divider} />
 
         <View style={[styles.pill, styles.pillSoon]}>
           <Ionicons name="briefcase-outline" size={12} color="#c9a58e" />
@@ -122,6 +120,15 @@ const styles = StyleSheet.create({
     color: '#a2887c',
     marginRight: 4,
   },
+  // role section headings, colour-coded so the two groups read apart at a glance
+  group: {
+    fontFamily: font.extrabold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    marginHorizontal: 2,
+  },
+  groupTeacher: { color: '#8fc9e8' },
+  groupParent: { color: '#f7a17a' },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -132,11 +139,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   pillOn: { backgroundColor: colors.brandSolid },
-  pillRoleOn: { backgroundColor: colors.pillInactive },
   pillSoon: { opacity: 0.55 },
   pillTxt: { fontFamily: font.bold, fontSize: 12, color: '#c9a58e' },
   pillTxtOn: { color: colors.white },
-  pillTxtRoleOn: { color: colors.textDark },
   divider: {
     width: 1,
     height: 18,
