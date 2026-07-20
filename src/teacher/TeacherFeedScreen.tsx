@@ -131,11 +131,8 @@ export function TeacherFeedScreen({
         </View>
       )}
 
-      <Pressable style={styles.newBtn} onPress={onNewPost}>
-        <Ionicons name="camera" size={18} color={colors.white} />
-        <Text style={styles.newBtnTxt}>New post</Text>
-      </Pressable>
-
+      {/* posting lives on the floating + button, which follows you down the
+          feed. A second full-width button at the top only competed with it. */}
       <View style={styles.cards}>
         {shown.map((p) => (
           <PostCard
@@ -228,17 +225,5 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   liveTxt: { fontFamily: font.bold, fontSize: 12.5, color: '#2e7d4f', flex: 1 },
-  newBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.brandSolid,
-    borderRadius: 24,
-    paddingVertical: 12,
-    marginHorizontal: 16,
-    marginBottom: 14,
-  },
-  newBtnTxt: { fontFamily: font.heading, fontSize: 15, color: colors.white },
-  cards: { paddingHorizontal: 16, gap: 16 },
+  cards: { paddingHorizontal: 16, paddingTop: 4, gap: 16 },
 });

@@ -31,10 +31,16 @@ const STEPS: { icon: keyof typeof Ionicons.glyphMap; title: string; sub: string 
 export function AwaitingVerificationScreen({
   email = 'junie.okafor@lincoln.edu',
   onContactAdmin,
+  onBack,
   onSignOut,
 }: {
   email?: string;
   onContactAdmin?: () => void;
+  // present when a parent reached this from their Profile, where going back to
+  // being a parent is the right escape. Signing out would be the wrong one:
+  // they have an account they are still happily using.
+  onBack?: () => void;
+  // present when this IS the whole app, with no tab bar and nothing behind it
   onSignOut?: () => void;
 }) {
   const [signOutOpen, setSignOutOpen] = useState(false);
@@ -46,6 +52,16 @@ export function AwaitingVerificationScreen({
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {onBack && (
+          <Pressable
+            onPress={onBack}
+            style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <Ionicons name="chevron-back" size={20} color={colors.primaryDeep} />
+          </Pressable>
+        )}
         <View style={styles.hero}>
           <Text style={styles.emoji}>🪪</Text>
           <Text style={styles.title}>Your school needs{'\n'}to verify you</Text>
@@ -75,15 +91,17 @@ export function AwaitingVerificationScreen({
 
         <View style={styles.footRow}>
           <Text style={styles.foot}>Signed in as {email}</Text>
-          <Pressable
-            style={styles.signOut}
-            onPress={() => setSignOutOpen(true)}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel="Sign out"
-          >
-            <Text style={styles.signOutTxt}>Not you? Sign out</Text>
-          </Pressable>
+          {onSignOut && (
+            <Pressable
+              style={styles.signOut}
+              onPress={() => setSignOutOpen(true)}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Sign out"
+            >
+              <Text style={styles.signOutTxt}>Not you? Sign out</Text>
+            </Pressable>
+          )}
         </View>
       </ScrollView>
 
@@ -101,6 +119,18 @@ export function AwaitingVerificationScreen({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.appBg },
+  backBtn: {
+    position: 'absolute',
+    top: 10,
+    left: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: colors.pillInactive,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
   content: {
     flexGrow: 1,
     justifyContent: 'center',

@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-
 import { Ionicons } from '@expo/vector-icons';
 import { colors, font, shadowSoft } from '../theme';
 import { noOutline } from '../onboarding/ui';
+import { SignOutSheet } from '../screens/profile/SignOutSheet';
 
 // First thing a teacher sees after verifying their email: name the classroom.
 // One field, one button. The chips are SAMPLE titles to riff on, not guesses
@@ -17,16 +18,26 @@ const SAMPLES = [
 export function CreateClassroomScreen({
   onCreate,
   onCancel,
+  email = 'junie.okafor@lincoln.edu',
+  onSignOut,
 }: {
   onCreate: (name: string) => void;
-  // present when a teacher who already has classrooms is adding another
+  // present when a teacher who already has classrooms is adding another, or
+  // when a parent walked in here from their Profile
   onCancel?: () => void;
+  email?: string;
+  // present when this screen is the whole app: a brand-new teacher with no tab
+  // bar, no back, and otherwise no way off it if they signed up as the wrong
+  // person. The same escape the awaiting-verification screen carries.
+  onSignOut?: () => void;
 }) {
   const [name, setName] = useState('');
+  const [signOutOpen, setSignOutOpen] = useState(false);
   const ready = name.trim().length > 0;
   const addingAnother = !!onCancel;
 
   return (
+    <View style={styles.root}>
     <ScrollView
       style={{ backgroundColor: colors.appBg }}
       contentContainerStyle={styles.content}
@@ -82,12 +93,47 @@ export function CreateClassroomScreen({
         Each classroom gets its own three-word join code. Share it with your families,
         and rotate it anytime.
       </Text>
+
+      {onSignOut && (
+        <View style={styles.footRow}>
+          <Text style={styles.signedIn}>Signed in as {email}</Text>
+          <Pressable
+            style={styles.signOut}
+            onPress={() => setSignOutOpen(true)}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
+          >
+            <Text style={styles.signOutTxt}>Not you? Sign out</Text>
+          </Pressable>
+        </View>
+      )}
     </ScrollView>
+
+    <SignOutSheet
+      visible={signOutOpen}
+      onClose={() => setSignOutOpen(false)}
+      onConfirm={() => {
+        setSignOutOpen(false);
+        onSignOut?.();
+      }}
+    />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.appBg },
   content: { paddingHorizontal: 20, paddingBottom: 40, gap: 18, flexGrow: 1, justifyContent: 'center' },
+  footRow: { alignItems: 'center', gap: 6, marginTop: 4 },
+  signedIn: {
+    fontFamily: font.regular,
+    fontSize: 12.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  signOut: { paddingVertical: 2 },
+  signOutTxt: { fontFamily: font.bold, fontSize: 12.5, color: colors.primary },
   backBtn: {
     position: 'absolute',
     top: 10,

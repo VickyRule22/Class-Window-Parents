@@ -125,6 +125,9 @@ export default function App() {
   const [blockName, setBlockName] = useState<string | null>(null);
   // teachers this parent has actually blocked, added only once they confirm
   const [blocked, setBlocked] = useState<string[]>([]);
+  // true while the teacher screens were entered from a parent's Profile, which
+  // decides whether those screens offer back or sign out
+  const [fromProfile, setFromProfile] = useState(false);
   const [feedFilter, setFeedFilter] = useState('all');
   // active view + which roles this account has actually earned. Roles come
   // from how you got in (parent code vs classroom setup), never a free toggle;
@@ -189,6 +192,7 @@ export default function App() {
     setReportOpen(false);
     setBlockName(null);
     setBlocked([]);
+    setFromProfile(false);
     setDest(null);
     setRole('parent');
     setHasParentRole(false);
@@ -205,12 +209,25 @@ export default function App() {
     setJustPosted(false);
   };
 
-  // parent adds their teacher side: run the classroom first-run; the teacher
-  // role is granted when a classroom actually exists
+  // parent adds their teacher side. Claiming to teach somewhere doesn't make it
+  // true, so this lands on the waiting screen exactly like a fresh teacher
+  // sign-up: the school still has to confirm them before a classroom exists.
   const startTeacherSetup = () => {
     setRole('teacher');
     setTab('feed');
+    setTeacherVerified(false);
+    setFromProfile(true);
     if (classrooms.length > 0) setHasTeacherRole(true);
+  };
+
+  // ...and back out again, to the Profile they came from. They still have a
+  // perfectly good parent account, so the escape here is back, not sign out.
+  const cancelTeacherSetup = () => {
+    setFromProfile(false);
+    setTeacherVerified(true);
+    setCreatingClassroom(false);
+    setRole('parent');
+    setTab('profile');
   };
 
   const addClassroom = (name: string) => {
@@ -253,6 +270,11 @@ export default function App() {
   const goTo = (d: Dest) => {
     setDest(d);
     setReportOpen(false);
+    setBlockName(null);
+    setBlocked([]);
+    // every pill is a fresh front door, never a continuation of a parent's
+    // trip through Profile, so these screens go back to offering sign out
+    setFromProfile(false);
     setPickerOpen(false);
     setComposePhoto(null);
     setCreatingClassroom(false);
@@ -336,7 +358,10 @@ export default function App() {
               <View style={styles.screen}>
                 <AwaitingVerificationScreen
                   onContactAdmin={() => notify('Drafts an email to your school administrator')}
-                  onSignOut={signOut}
+                  // a parent who wandered in from Profile goes back; a teacher
+                  // who has nothing else in the app signs out
+                  onBack={fromProfile ? cancelTeacherSetup : undefined}
+                  onSignOut={fromProfile ? undefined : signOut}
                 />
               </View>
             </>
@@ -348,8 +373,19 @@ export default function App() {
               <View style={styles.screen}>
                 <CreateClassroomScreen
                   onCreate={addClassroom}
+                  // back when there's somewhere to go back to: the feed they
+                  // were adding a second room from, or the Profile they came
+                  // in through. Otherwise this screen is the whole app, and
+                  // sign out is the only way off it.
                   onCancel={
-                    classrooms.length > 0 ? () => setCreatingClassroom(false) : undefined
+                    classrooms.length > 0
+                      ? () => setCreatingClassroom(false)
+                      : fromProfile
+                        ? cancelTeacherSetup
+                        : undefined
+                  }
+                  onSignOut={
+                    classrooms.length === 0 && !fromProfile ? signOut : undefined
                   }
                 />
               </View>
