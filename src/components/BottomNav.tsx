@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Text, Pressable, Animated, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, font } from '../theme';
 
@@ -73,15 +73,21 @@ export function BottomNav({
   active,
   onChange,
   hide = [],
+  centerGap = false,
 }: {
   active: TabKey;
   onChange: (t: TabKey) => void;
   // tabs this role has no business seeing (teachers get no parent Classes list)
   hide?: TabKey[];
+  // leave an empty slot in the middle for a docked action button
+  centerGap?: boolean;
 }) {
+  const visible = TABS.filter((t) => !hide.includes(t.key));
+  const mid = Math.ceil(visible.length / 2);
+
   return (
     <Animated.View style={styles.bar}>
-      {TABS.filter((t) => !hide.includes(t.key)).map((t) => (
+      {visible.slice(0, centerGap ? mid : undefined).map((t) => (
         <NavTab
           key={t.key}
           label={t.label}
@@ -90,6 +96,17 @@ export function BottomNav({
           onPress={() => onChange(t.key)}
         />
       ))}
+      {centerGap && <View style={styles.tab} />}
+      {centerGap &&
+        visible.slice(mid).map((t) => (
+          <NavTab
+            key={t.key}
+            label={t.label}
+            icon={t.icon}
+            active={t.key === active}
+            onPress={() => onChange(t.key)}
+          />
+        ))}
     </Animated.View>
   );
 }

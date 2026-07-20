@@ -34,6 +34,7 @@ import { CreateClassroomScreen } from './src/teacher/CreateClassroomScreen';
 import { AwaitingVerificationScreen } from './src/teacher/AwaitingVerificationScreen';
 import { TeacherFeedScreen } from './src/teacher/TeacherFeedScreen';
 import { PhotoPickerSheet, PickedPhoto } from './src/teacher/PhotoPickerSheet';
+import { PostFab } from './src/teacher/PostFab';
 import { ComposeScreen } from './src/teacher/ComposeScreen';
 import { colors, avatarGradients } from './src/theme';
 import type { Post } from './src/data';
@@ -129,6 +130,8 @@ export default function App() {
   const [toastVisible, setToastVisible] = useState(false);
   const [teacherPosts, setTeacherPosts] = useState<Post[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // a teacher with a classroom can post, which is what the docked + button does
+  const teacherCanPost = role === 'teacher' && classrooms.length > 0;
   const [composePhoto, setComposePhoto] = useState<PickedPhoto | null>(null);
   const [justPosted, setJustPosted] = useState(false);
 
@@ -438,8 +441,21 @@ export default function App() {
               <BottomNav
                 active={tab}
                 onChange={changeTab}
-                hide={role === 'teacher' ? ['classes'] : []}
+                // Classes is the family's list of other teachers; Wishlists is
+                // a placeholder. Dropping both leaves the centre free for the
+                // action a teacher is actually here to take.
+                hide={role === 'teacher' ? ['classes', 'wishlists'] : []}
+                centerGap={teacherCanPost}
               />
+              {/* sharing a photo is the teacher's main action, so it gets a
+                  docked button lifted out of the bar instead of a row in it */}
+              {teacherCanPost && (
+                <PostFab
+                  onPress={() => setPickerOpen(true)}
+                  open={pickerOpen}
+                  pulse={teacherPosts.length === 0}
+                />
+              )}
               {/* report sheet lives inside the device frame so it stays contained */}
               <ReportModal visible={reportOpen} onClose={() => setReportOpen(false)} />
               <Toast message={toast} visible={toastVisible} />

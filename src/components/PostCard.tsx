@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, Text, Image, Pressable, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from './Avatar';
+import { HeartButton } from './HeartButton';
 import { colors, font, shadowCard } from '../theme';
 import type { Post } from '../data';
 
@@ -19,17 +20,32 @@ export function PostCard({
   const [liked, setLiked] = useState(post.liked);
   const [likes, setLikes] = useState(post.likes);
   const [menuOpen, setMenuOpen] = useState(false);
-  const scale = useRef(new Animated.Value(1)).current;
+  // the big heart that blooms over the photo on a double-tap
+  const bloom = useRef(new Animated.Value(0)).current;
+  const lastTap = useRef(0);
 
-  const toggleLike = () => {
-    const next = !liked;
+  const setLike = (next: boolean) => {
+    if (next === liked) return;
     setLiked(next);
     setLikes((n) => n + (next ? 1 : -1));
-    // little pop on the heart
-    Animated.sequence([
-      Animated.spring(scale, { toValue: 1.25, useNativeDriver: true, speed: 50 }),
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20 }),
-    ]).start();
+  };
+
+  // Double-tap the photo to like it, the way families already expect from
+  // Instagram, so nobody has to hunt for the button. Tapping an already-liked
+  // photo still blooms (it just doesn't double-count the like).
+  const onPhotoPress = () => {
+    const now = Date.now();
+    if (now - lastTap.current < 280) {
+      lastTap.current = 0;
+      setLike(true);
+      bloom.setValue(0);
+      Animated.sequence([
+        Animated.spring(bloom, { toValue: 1, useNativeDriver: true, friction: 4, tension: 120 }),
+        Animated.timing(bloom, { toValue: 0, duration: 340, delay: 240, useNativeDriver: true }),
+      ]).start();
+      return;
+    }
+    lastTap.current = now;
   };
 
   return (
@@ -85,9 +101,26 @@ export function PostCard({
       )}
 
       {/* image */}
-      <View style={[styles.image, { backgroundColor: post.imageColor }]}>
+      <Pressable
+        onPress={onPhotoPress}
+        style={[styles.image, { backgroundColor: post.imageColor }]}
+      >
         <Image source={post.image} style={styles.photo} resizeMode="cover" />
-      </View>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.bloom,
+            {
+              opacity: bloom.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 0.95, 0.95] }),
+              transform: [
+                { scale: bloom.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) },
+              ],
+            },
+          ]}
+        >
+          <Ionicons name="heart" size={96} color={colors.white} />
+        </Animated.View>
+      </Pressable>
 
       {/* caption */}
       <View style={styles.captionWrap}>
@@ -96,24 +129,7 @@ export function PostCard({
 
       {/* reactions */}
       <View style={styles.reactions}>
-        <Pressable
-          onPress={toggleLike}
-          style={[
-            styles.reactionBtn,
-            liked
-              ? { backgroundColor: colors.reactionLikedBg, borderColor: colors.cardBorderPeach }
-              : { backgroundColor: colors.reactionDefaultBg, borderColor: colors.reactionDefaultBorder },
-          ]}
-        >
-          <Animated.View style={{ transform: [{ scale }] }}>
-            <Ionicons
-              name={liked ? 'heart' : 'heart-outline'}
-              size={16}
-              color={colors.primaryDeep}
-            />
-          </Animated.View>
-          <Text style={styles.reactionCount}>{likes}</Text>
-        </Pressable>
+        <HeartButton liked={liked} count={likes} onToggle={setLike} />
       </View>
     </View>
   );
@@ -170,6 +186,14 @@ const styles = StyleSheet.create({
   menuTxt: { fontFamily: font.semibold, fontSize: 14, color: colors.textDark2 },
   image: { height: 269, alignItems: 'center', justifyContent: 'center' },
   photo: { width: '100%', height: '100%' },
+  bloom: {
+    position: 'absolute',
+    alignSelf: 'center',
+    shadowColor: '#2c1a0e',
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+  },
   captionWrap: { paddingHorizontal: 16, paddingVertical: 12 },
   caption: { fontFamily: font.semibold, fontSize: 14, color: colors.caption, lineHeight: 20 },
   reactions: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, flexDirection: 'row' },
