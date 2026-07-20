@@ -6,15 +6,24 @@ import { HeartButton } from './HeartButton';
 import { colors, font, shadowCard } from '../theme';
 import type { Post } from '../data';
 
+// Teachers are listed formally ("Mrs. Sarah Johnson"), which is right on a post
+// but reads oddly in "Block ...". Drop the title so the menu row and the block
+// dialog name the same person the same way.
+export const shortName = (name: string) => name.replace(/^(Ms\.|Mr\.|Mrs\.|Miss)\s+/, '');
+
 export function PostCard({
   post,
   onReport,
+  onBlock,
   onTrash,
 }: {
   post: Post;
   onReport: () => void;
-  // remove this post from the feed (a parent hiding something sketchy, or a
-  // teacher trashing their own post)
+  // a parent shutting this teacher out of their feed entirely. Parents get this
+  // instead of trash: hiding one photo does nothing about whoever posted it.
+  onBlock?: () => void;
+  // a teacher taking their OWN post back down. Never offered to parents, who
+  // can't delete someone else's post for everybody.
   onTrash?: () => void;
 }) {
   const [liked, setLiked] = useState(post.liked);
@@ -69,13 +78,13 @@ export function PostCard({
         </Pressable>
       </View>
 
-      {/* post actions: report anything sketchy, or trash it out of the feed */}
+      {/* post actions: a parent reports or blocks, a teacher reports or trashes */}
       {menuOpen && (
         <>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenuOpen(false)} />
           <View style={styles.menu}>
             <Pressable
-              style={styles.menuRow}
+              style={[styles.menuRow, !onBlock && !onTrash && styles.menuRowLast]}
               onPress={() => {
                 setMenuOpen(false);
                 onReport();
@@ -84,6 +93,20 @@ export function PostCard({
               <Ionicons name="flag-outline" size={15} color={colors.textDark2} />
               <Text style={styles.menuTxt}>Report post</Text>
             </Pressable>
+            {onBlock && (
+              <Pressable
+                style={[styles.menuRow, styles.menuRowLast]}
+                onPress={() => {
+                  setMenuOpen(false);
+                  onBlock();
+                }}
+              >
+                <Ionicons name="ban-outline" size={15} color="#d64545" />
+                <Text style={[styles.menuTxt, { color: '#d64545' }]}>
+                  Block {shortName(post.name)}
+                </Text>
+              </Pressable>
+            )}
             {onTrash && (
               <Pressable
                 style={[styles.menuRow, styles.menuRowLast]}

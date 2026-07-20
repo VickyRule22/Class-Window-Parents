@@ -1,32 +1,43 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PostCard } from '../components/PostCard';
+import { PostCard, shortName } from '../components/PostCard';
 import { posts, feedFilters } from '../data';
 import { colors, font } from '../theme';
 
 export function FeedScreen({
   onReport,
+  onBlock,
+  blocked,
   filter,
   onFilterChange,
   teacherInvite,
 }: {
   onReport: () => void;
+  // opens the block confirmation for whoever posted this. Nothing is hidden
+  // until the parent confirms, so the dialog's Cancel really does cancel.
+  onBlock: (name: string) => void;
+  // teachers this parent has blocked. Blocking hides everything that person
+  // posted, not just the one photo, which is the point of blocking a person
+  // rather than hiding a picture.
+  blocked: string[];
   filter: string;
   onFilterChange: (key: string) => void;
   // set when a school admin has added this parent as a teacher: a feed banner
   // nudges them to create their classroom, which unlocks the role switcher
   teacherInvite?: { onSetup: () => void; onDismiss: () => void } | null;
 }) {
-  // posts the parent trashed out of their own feed (doesn't touch anyone else's)
-  const [trashed, setTrashed] = useState<string[]>([]);
-  const pool = posts.filter((p) => !trashed.includes(p.id));
+  // compared on the short name, which is what the block dialog recorded
+  const pool = posts.filter((p) => !blocked.includes(shortName(p.name)));
   const visible = filter === 'all' ? pool : pool.filter((p) => p.initials === filter);
   const activeLabel = feedFilters.find((f) => f.key === filter)?.label ?? '';
+  // counted, not hardcoded, so blocking a teacher doesn't leave the header
+  // promising moments that are no longer in the feed
+  const moments = `${visible.length} ${visible.length === 1 ? 'moment' : 'moments'}`;
   const subtitle =
     filter === 'all'
-      ? "3 new moments from your kids' classrooms"
-      : `${visible.length} ${visible.length === 1 ? 'moment' : 'moments'} from ${activeLabel.split(' ·')[0]}`;
+      ? `${moments} from your kids' classrooms`
+      : `${moments} from ${activeLabel.split(' ·')[0]}`;
 
   return (
     <ScrollView
@@ -88,7 +99,7 @@ export function FeedScreen({
             key={p.id}
             post={p}
             onReport={onReport}
-            onTrash={() => setTrashed((t) => [...t, p.id])}
+            onBlock={() => onBlock(shortName(p.name))}
           />
         ))}
 

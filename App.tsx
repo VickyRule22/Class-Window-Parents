@@ -22,6 +22,7 @@ import { PrototypeNav, Dest } from './src/components/PrototypeNav';
 import { Role } from './src/components/RoleSwitcher';
 import { ScreenTransition } from './src/components/ScreenTransition';
 import { ReportModal } from './src/components/ReportModal';
+import { BlockModal } from './src/components/BlockModal';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { FeedScreen } from './src/screens/FeedScreen';
 import { ParentJoinScreen } from './src/screens/ParentJoinScreen';
@@ -120,6 +121,10 @@ export default function App() {
   const [tab, setTab] = useState<TabKey>('feed');
   const [direction, setDirection] = useState(1);
   const [reportOpen, setReportOpen] = useState(false);
+  // the teacher a parent is in the middle of blocking, null when nobody is
+  const [blockName, setBlockName] = useState<string | null>(null);
+  // teachers this parent has actually blocked, added only once they confirm
+  const [blocked, setBlocked] = useState<string[]>([]);
   const [feedFilter, setFeedFilter] = useState('all');
   // active view + which roles this account has actually earned. Roles come
   // from how you got in (parent code vs classroom setup), never a free toggle;
@@ -182,6 +187,8 @@ export default function App() {
     setTab('feed');
     setFeedFilter('all');
     setReportOpen(false);
+    setBlockName(null);
+    setBlocked([]);
     setDest(null);
     setRole('parent');
     setHasParentRole(false);
@@ -379,9 +386,11 @@ export default function App() {
                       justPosted={justPosted}
                       onNewPost={() => setPickerOpen(true)}
                       onReport={() => setReportOpen(true)}
-                      onTrashPost={(id) =>
-                        setTeacherPosts((prev) => prev.filter((p) => p.id !== id))
-                      }
+                      onTrashPost={(id) => {
+                        setTeacherPosts((prev) => prev.filter((p) => p.id !== id));
+                        // the post vanishing is easy to miss mid-scroll, so say so
+                        notify('Post moved to trash');
+                      }}
                     />
                   ) : tab === 'feed' && !parentJoined ? (
                     // brand-new parent: the feed is the join step until they
@@ -391,6 +400,8 @@ export default function App() {
                     tab === 'feed' && (
                       <FeedScreen
                         onReport={() => setReportOpen(true)}
+                        onBlock={setBlockName}
+                        blocked={blocked}
                         filter={feedFilter}
                         onFilterChange={setFeedFilter}
                         teacherInvite={
@@ -472,6 +483,12 @@ export default function App() {
               )}
               {/* report sheet lives inside the device frame so it stays contained */}
               <ReportModal visible={reportOpen} onClose={() => setReportOpen(false)} />
+              <BlockModal
+                name={blockName ?? ''}
+                visible={blockName !== null}
+                onClose={() => setBlockName(null)}
+                onConfirm={() => blockName && setBlocked((b) => [...b, blockName])}
+              />
               <Toast message={toast} visible={toastVisible} />
               {/* teacher photo picker springs up over the feed */}
               <PhotoPickerSheet

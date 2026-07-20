@@ -3,7 +3,17 @@ import { View, Text, Pressable, Animated, Easing, StyleSheet } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import { colors, font } from '../theme';
 
-const REASONS = ["It's inappropriate", "It's spam", 'Something else'];
+// The categories Apple expects a UGC app to offer, kept word for word from the
+// App Store safety flows so review sees the same list twice. Harassment and
+// safety are their own reasons on purpose: folding them into "inappropriate"
+// loses the signal that decides how fast a report gets looked at.
+const REASONS = [
+  'Inappropriate content',
+  'Harassment or bullying',
+  'Spam',
+  'Safety concern',
+  'Something else',
+];
 
 export function ReportModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [step, setStep] = useState<0 | 1>(0);
@@ -54,6 +64,9 @@ export function ReportModal({ visible, onClose }: { visible: boolean; onClose: (
             <>
               <View style={styles.header}>
                 <Text style={styles.title}>Report a post</Text>
+                <Text style={styles.sub}>
+                  Tell us what's wrong. Our team reviews reports within 24 hours.
+                </Text>
                 <Pressable hitSlop={8} onPress={close} style={styles.close}>
                   <Ionicons name="close" size={20} color={colors.ink600} />
                 </Pressable>
@@ -79,7 +92,7 @@ export function ReportModal({ visible, onClose }: { visible: boolean; onClose: (
 
               <View style={styles.actions}>
                 <Pressable style={styles.primaryBtn} onPress={() => setStep(1)}>
-                  <Text style={styles.primaryTxt}>Continue</Text>
+                  <Text style={styles.primaryTxt}>Submit report</Text>
                 </Pressable>
                 <Pressable style={styles.secondaryBtn} onPress={close}>
                   <Text style={styles.secondaryTxt}>Cancel</Text>
@@ -89,7 +102,7 @@ export function ReportModal({ visible, onClose }: { visible: boolean; onClose: (
           ) : (
             <>
               <View style={styles.header}>
-                <Text style={styles.title}>Report a post</Text>
+                <Text style={styles.title}>Report received</Text>
                 <Pressable hitSlop={8} onPress={close} style={styles.close}>
                   <Ionicons name="close" size={20} color={colors.ink600} />
                 </Pressable>
@@ -108,9 +121,6 @@ export function ReportModal({ visible, onClose }: { visible: boolean; onClose: (
               <View style={styles.actions}>
                 <Pressable style={styles.primaryBtn} onPress={close}>
                   <Text style={styles.primaryTxt}>Done</Text>
-                </Pressable>
-                <Pressable style={styles.secondaryBtn} onPress={close}>
-                  <Text style={styles.secondaryTxt}>Contact Us</Text>
                 </Pressable>
               </View>
             </>
@@ -140,8 +150,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 20 },
     elevation: 16,
   },
-  header: { paddingTop: 20, paddingHorizontal: 16, paddingBottom: 20 },
+  header: { paddingTop: 20, paddingHorizontal: 16, paddingBottom: 20, gap: 6 },
   title: { fontFamily: font.semibold, fontSize: 16, color: colors.ink900 },
+  sub: {
+    fontFamily: font.regular,
+    fontSize: 13,
+    color: colors.ink600,
+    lineHeight: 18,
+    paddingRight: 24,
+  },
   close: { position: 'absolute', right: 12, top: 12, padding: 8 },
 
   options: { paddingHorizontal: 16, gap: 12 },
