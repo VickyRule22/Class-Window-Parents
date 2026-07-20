@@ -31,6 +31,7 @@ import { Toast } from './src/screens/profile/ui';
 import { WishlistsScreen } from './src/screens/WishlistsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { CreateClassroomScreen } from './src/teacher/CreateClassroomScreen';
+import { AwaitingVerificationScreen } from './src/teacher/AwaitingVerificationScreen';
 import { TeacherFeedScreen } from './src/teacher/TeacherFeedScreen';
 import { PhotoPickerSheet, PickedPhoto } from './src/teacher/PhotoPickerSheet';
 import { ComposeScreen } from './src/teacher/ComposeScreen';
@@ -116,6 +117,9 @@ export default function App() {
 
   // teacher first-run: create a classroom, then get nudged into a first post.
   // Teachers can run several classrooms; each carries its own join code.
+  // whether the school has confirmed this person teaches there. Until they do,
+  // a teacher can't create a classroom at all, so they get the waiting screen.
+  const [teacherVerified, setTeacherVerified] = useState(true);
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [creatingClassroom, setCreatingClassroom] = useState(false);
   // a joined parent adding one more class: same join-by-code screen, pushed
@@ -157,6 +161,7 @@ export default function App() {
     setRole('parent');
     setHasParentRole(false);
     setHasTeacherRole(false);
+    setTeacherVerified(true);
     setParentJoined(false);
     setInviteDismissed(false);
     setClassrooms([]);
@@ -241,8 +246,10 @@ export default function App() {
 
     if (isTeacher) {
       setParentJoined(false);
-      if (d === 'teacher-new') {
-        // brand-new teacher: no classroom yet, so the first-run takes over
+      // only the unverified pill is waiting on the school
+      setTeacherVerified(d !== 'teacher-unverified');
+      if (d === 'teacher-unverified' || d === 'teacher-verified') {
+        // no classroom yet: unverified waits on the school, verified names one
         setClassrooms([]);
         setTeacherPosts([]);
       } else {
@@ -303,6 +310,16 @@ export default function App() {
                 setHasParentRole(true);
               }}
             />
+          ) : role === 'teacher' && !teacherVerified ? (
+            // signed up, but the school hasn't confirmed them yet
+            <>
+              <AppHeader role={role} onRolePress={() => {}} showRole={dualRole} />
+              <View style={styles.screen}>
+                <AwaitingVerificationScreen
+                  onContactAdmin={() => notify('Drafts an email to your school administrator')}
+                />
+              </View>
+            </>
           ) : role === 'teacher' && (classrooms.length === 0 || creatingClassroom) ? (
             // teacher first-run (or adding another classroom): name it.
             // Creating the first one is what earns the teacher role.

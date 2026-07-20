@@ -7,7 +7,8 @@ import { colors, font } from '../theme';
 // a complete starting state in App, so a reviewer can land directly on any
 // screen, including states you can normally only reach mid-flow.
 export type Dest =
-  | 'teacher-new'
+  | 'teacher-unverified'
+  | 'teacher-verified'
   | 'teacher-empty'
   | 'teacher-feed'
   | 'teacher-post'
@@ -24,7 +25,10 @@ export type Dest =
 type Item = { key: Dest; label: string; icon: keyof typeof Ionicons.glyphMap };
 
 const TEACHER: Item[] = [
-  { key: 'teacher-new', label: 'Unverified', icon: 'lock-closed-outline' },
+  // not yet confirmed by their school: nothing to do but contact the admin
+  { key: 'teacher-unverified', label: 'Unverified', icon: 'lock-closed-outline' },
+  // verified by the school, but hasn't named a classroom yet
+  { key: 'teacher-verified', label: 'Verified', icon: 'checkmark-circle-outline' },
   { key: 'teacher-empty', label: 'Empty feed', icon: 'sparkles-outline' },
   { key: 'teacher-feed', label: 'Feed', icon: 'home-outline' },
   { key: 'teacher-post', label: 'New post', icon: 'camera-outline' },
