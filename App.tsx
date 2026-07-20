@@ -358,7 +358,12 @@ export default function App() {
                       />
                     )
                   )}
-                  {tab === 'classes' && <ClassesScreen onOpenClass={openClass} />}
+                  {/* Classes is the family's list of their kids' teachers, so it
+                      is parent-only: a teacher has no business browsing other
+                      teachers' classrooms. */}
+                  {tab === 'classes' && role === 'parent' && (
+                    <ClassesScreen onOpenClass={openClass} />
+                  )}
                   {tab === 'wishlists' && <WishlistsScreen />}
                   {tab === 'profile' && (
                     <ProfileScreen
@@ -386,7 +391,11 @@ export default function App() {
                   )}
                 </ScreenTransition>
               </View>
-              <BottomNav active={tab} onChange={changeTab} />
+              <BottomNav
+                active={tab}
+                onChange={changeTab}
+                hide={role === 'teacher' ? ['classes'] : []}
+              />
               {/* report sheet lives inside the device frame so it stays contained */}
               <ReportModal visible={reportOpen} onClose={() => setReportOpen(false)} />
               {/* teacher photo picker springs up over the feed */}

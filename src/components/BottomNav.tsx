@@ -72,13 +72,16 @@ function NavTab({
 export function BottomNav({
   active,
   onChange,
+  hide = [],
 }: {
   active: TabKey;
   onChange: (t: TabKey) => void;
+  // tabs this role has no business seeing (teachers get no parent Classes list)
+  hide?: TabKey[];
 }) {
   return (
     <Animated.View style={styles.bar}>
-      {TABS.map((t) => (
+      {TABS.filter((t) => !hide.includes(t.key)).map((t) => (
         <NavTab
           key={t.key}
           label={t.label}
