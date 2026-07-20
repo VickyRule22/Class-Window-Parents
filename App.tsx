@@ -344,6 +344,7 @@ export default function App() {
               <View style={styles.screen}>
                 <AwaitingVerificationScreen
                   onContactAdmin={() => notify('Drafts an email to your school administrator')}
+                  onSignOut={signOut}
                 />
               </View>
             </>
