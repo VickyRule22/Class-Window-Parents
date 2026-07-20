@@ -116,11 +116,11 @@ export function ProfileScreen({
               <View style={styles.parentCard}>
                 <View style={styles.parentTop}>
                   <Pressable onPress={() => notify('Photo picker would open')}>
-                    <Avatar initials="SC" solid={colors.primaryAlt} size={46} fontSize={16} />
+                    <Avatar initials="MS" solid={colors.primaryAlt} size={46} fontSize={16} />
                   </Pressable>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.parentName}>Sarah Chen</Text>
-                    <Text style={styles.parentEmail}>sarah.chen@email.com</Text>
+                    <Text style={styles.parentName}>Mitch Salzberg</Text>
+                    <Text style={styles.parentEmail}>mitch.salzberg@email.com</Text>
                   </View>
                   <Pressable style={styles.editBtn} onPress={() => go('personal')}>
                     <Text style={styles.editTxt}>Edit</Text>

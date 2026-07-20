@@ -13,9 +13,9 @@ export function PersonalInfoScreen({
   onBack: () => void;
   notify: (msg: string) => void;
 }) {
-  const [first, setFirst] = useState('Sarah');
-  const [last, setLast] = useState('Chen');
-  const [email, setEmail] = useState('sarah.chen@email.com');
+  const [first, setFirst] = useState('Mitch');
+  const [last, setLast] = useState('Salzberg');
+  const [email, setEmail] = useState('mitch.salzberg@email.com');
   const [phone, setPhone] = useState('(864) 555-0119');
 
   const complete = first.trim() && last.trim() && email.trim();
@@ -29,7 +29,7 @@ export function PersonalInfoScreen({
       >
         <View style={styles.photoWrap}>
           <Pressable onPress={() => notify('Photo picker would open')}>
-            <Avatar initials="SC" solid={colors.primaryAlt} size={84} fontSize={28} />
+            <Avatar initials="MS" solid={colors.primaryAlt} size={84} fontSize={28} />
           </Pressable>
           <Pressable
             style={styles.changePhoto}

@@ -26,7 +26,7 @@ const STEPS: { icon: keyof typeof Ionicons.glyphMap; title: string; sub: string 
 ];
 
 export function AwaitingVerificationScreen({
-  email = 'sarah.chen@email.com',
+  email = 'junie.okafor@lincoln.edu',
   onContactAdmin,
 }: {
   email?: string;

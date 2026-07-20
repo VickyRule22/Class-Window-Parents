@@ -55,7 +55,14 @@ const TAB_ORDER: TabKey[] = ['feed', 'classes', 'wishlists', 'profile'];
 
 // A ready-made classroom + a couple of posts, so the "verified teacher" persona
 // pill lands straight on a populated teacher feed instead of the first-run.
-const SEED_CLASSROOM = "Ms. Chen's 2nd Grade Science";
+// The sample teacher, deliberately nothing like the sample parent (Mitch
+// Salzberg) or the teachers a parent follows, so nobody confuses the personas.
+export const TEACHER_NAME = 'Ms. Junie Okafor';
+export const TEACHER_INITIALS = 'JO';
+export const TEACHER_EMAIL = 'junie.okafor@lincoln.edu';
+// Two rooms, so the teacher feed's class filter has something to filter.
+const SEED_CLASSROOM = "Ms. Okafor's 2nd Grade";
+const SEED_CLASSROOM_2 = 'After-School Science Club';
 // pre-picked photo so the Compose (caption) step is reachable in one jump
 const SEED_PHOTO: PickedPhoto = {
   image: require('./assets/figma/posts/sunflowers.png'),
@@ -64,9 +71,9 @@ const SEED_PHOTO: PickedPhoto = {
 const seedTeacherPosts = (): Post[] => [
   {
     id: 'seed-1',
-    initials: 'SC',
+    initials: TEACHER_INITIALS,
     gradient: avatarGradients.peach,
-    name: 'Ms. Sarah Chen',
+    name: TEACHER_NAME,
     meta: SEED_CLASSROOM,
     time: '2h ago',
     imageColor: colors.postGreen,
@@ -78,10 +85,10 @@ const seedTeacherPosts = (): Post[] => [
   },
   {
     id: 'seed-2',
-    initials: 'SC',
+    initials: TEACHER_INITIALS,
     gradient: avatarGradients.peach,
-    name: 'Ms. Sarah Chen',
-    meta: SEED_CLASSROOM,
+    name: TEACHER_NAME,
+    meta: SEED_CLASSROOM_2,
     time: 'Yesterday',
     imageColor: colors.postPeach,
     image: require('./assets/figma/posts/science.png'),
@@ -89,6 +96,20 @@ const seedTeacherPosts = (): Post[] => [
       'Our seedlings are reaching for the light. Every scientist made a prediction, and almost all were right! 🔬',
     likes: 15,
     liked: true,
+  },
+  {
+    id: 'seed-3',
+    initials: TEACHER_INITIALS,
+    gradient: avatarGradients.peach,
+    name: TEACHER_NAME,
+    meta: SEED_CLASSROOM,
+    time: '2 days ago',
+    imageColor: colors.postBlue,
+    image: require('./assets/figma/posts/sunflowers.png'),
+    caption:
+      'Sunflower gallery is up in the hallway. Every one of them picked their own colours. 🌻',
+    likes: 9,
+    liked: false,
   },
 ];
 
@@ -202,9 +223,9 @@ export default function App() {
     if (!composePhoto) return;
     const post: Post = {
       id: `t${Date.now()}`,
-      initials: 'SC',
+      initials: TEACHER_INITIALS,
       gradient: avatarGradients.peach,
-      name: 'Ms. Sarah Chen',
+      name: TEACHER_NAME,
       meta: classroom,
       time: 'Just now',
       imageColor: composePhoto.tint,
@@ -256,7 +277,10 @@ export default function App() {
         setClassrooms([]);
         setTeacherPosts([]);
       } else {
-        setClassrooms([{ name: SEED_CLASSROOM, code: makeCode() }]);
+        setClassrooms([
+          { name: SEED_CLASSROOM, code: makeCode() },
+          { name: SEED_CLASSROOM_2, code: makeCode() },
+        ]);
         // "empty feed" is the real pre-first-post state; everything else is populated
         setTeacherPosts(d === 'teacher-empty' ? [] : seedTeacherPosts());
       }

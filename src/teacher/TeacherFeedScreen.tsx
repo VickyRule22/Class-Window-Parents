@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Animated, Easing, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PostCard } from '../components/PostCard';
@@ -27,6 +27,9 @@ export function TeacherFeedScreen({
   onTrashPost?: (id: string) => void;
 }) {
   const headline = classrooms.length === 1 ? classrooms[0] : 'Your classrooms';
+  // 'all', or one of this teacher's own classroom names
+  const [filter, setFilter] = useState('all');
+  const shown = filter === 'all' ? posts : posts.filter((p) => p.meta === filter);
   const bob = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(0)).current;
 
@@ -92,9 +95,34 @@ export function TeacherFeedScreen({
       <View style={styles.greeting}>
         <Text style={styles.hi}>{headline}</Text>
         <Text style={styles.sub}>
-          {posts.length} {posts.length === 1 ? 'moment' : 'moments'} shared with families
+          {shown.length} {shown.length === 1 ? 'moment' : 'moments'} shared with families
         </Text>
       </View>
+
+      {/* Filter across the rooms this teacher runs. Only their own classrooms
+          appear here: a teacher never sees another teacher's classes. */}
+      {classrooms.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
+          {['all', ...classrooms].map((key) => {
+            const active = key === filter;
+            return (
+              <Pressable
+                key={key}
+                onPress={() => setFilter(key)}
+                style={[styles.pill, active ? styles.pillActive : styles.pillInactive]}
+              >
+                <Text style={[styles.pillTxt, { color: active ? colors.white : colors.textMuted }]}>
+                  {key === 'all' ? 'All Classes' : key}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
 
       {justPosted && (
         <View style={styles.liveBanner}>
@@ -109,7 +137,7 @@ export function TeacherFeedScreen({
       </Pressable>
 
       <View style={styles.cards}>
-        {posts.map((p) => (
+        {shown.map((p) => (
           <PostCard
             key={p.id}
             post={p}
@@ -170,6 +198,24 @@ const styles = StyleSheet.create({
   greeting: { paddingHorizontal: 20, paddingVertical: 8 },
   hi: { fontFamily: font.heading, fontSize: 20, color: colors.textDark },
   sub: { fontFamily: font.semibold, fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  // same filter pills the family feed uses, so the two feeds read as one app
+  filterRow: { paddingHorizontal: 20, paddingVertical: 6, gap: 8 },
+  pill: {
+    height: 32,
+    borderRadius: 999,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  pillActive: {
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  pillInactive: { backgroundColor: colors.pillInactive },
+  pillTxt: { fontFamily: font.bold, fontSize: 12 },
   liveBanner: {
     flexDirection: 'row',
     alignItems: 'center',

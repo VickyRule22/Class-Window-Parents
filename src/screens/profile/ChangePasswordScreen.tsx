@@ -63,7 +63,7 @@ export function ChangePasswordScreen({
         />
         <QuietButton
           label="Forgot your current one?"
-          onPress={() => notify('Reset link sent to sarah.chen@email.com')}
+          onPress={() => notify('Reset link sent to mitch.salzberg@email.com')}
         />
       </ScrollView>
     </View>
